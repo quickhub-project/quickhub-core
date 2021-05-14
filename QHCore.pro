@@ -4,7 +4,7 @@ QT += core websockets concurrent
 CONFIG += c++11
 
 CONFIG += plugin
-INCLUDEPATH += ../qh_plugin_system/src
+INCLUDEPATH += ../quickhub-pluginsystem/src
 INCLUDEPATH += src
 LIBS += -lQHPluginSystem -L../bin/lib
 DESTDIR = ../bin/plugins
