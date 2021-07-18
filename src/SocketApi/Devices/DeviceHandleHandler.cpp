@@ -52,7 +52,6 @@ void DeviceHandleHandler::handleMessage(QVariant message, ISocket *handle)
             if(!cbID.isEmpty())
             {
                 _cbMap.insert(cbID, handle);
-                qDebug()<<Q_FUNC_INFO<<": callBack-Key inserted!";
                 connect(handle, &ISocket::disconnected, this, &DeviceHandleHandler::socketDisconnectedSlot, Qt::UniqueConnection);
             }
             msg["command"] = "device:call:success";

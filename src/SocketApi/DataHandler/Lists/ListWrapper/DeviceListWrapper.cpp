@@ -47,7 +47,7 @@ bool DeviceListWrapper::addDevice(QString uuid)
     if(device)
     {
         connect(device, &IDevice::deviceStateChanged, this, &DeviceListWrapper::deviceStateChanged);
-        _list.insert(uuid, toMap(device));
+        _list.append(toMap(device));
         return true;
     }
     return false;
@@ -55,12 +55,16 @@ bool DeviceListWrapper::addDevice(QString uuid)
 
 int DeviceListWrapper::getIndex(QString uuid) const
 {
-    if(!_list.contains(uuid))
-        return -1;
 
-    QList<QString> keys = _list.keys();
-    auto i = qBinaryFind(keys.begin(), keys.end(), uuid);
-    return i - keys.begin();
+    QListIterator<QVariant>it(_list);
+    int idx = 0;
+    while(it.hasNext())
+    {
+        if(it.next().toMap()["uuid"] == uuid)
+            return idx;
+        idx++;
+    }
+    return -1;
 }
 
 void DeviceListWrapper::handleMessage(QVariant msg, ISocket *handle)
@@ -99,11 +103,11 @@ void DeviceListWrapper::devicePropertyChanged(QString uuid, QString property, QV
         return;
 
     int idx = getIndex(uuid);
-    QVariantMap item = _list[uuid].toMap();
+    QVariantMap item = _list[idx].toMap();
     QVariantMap properties = item["properties"].toMap();
     properties[property] = value;
     item["properties"] = properties;
-    _list.insert(uuid, item);
+    _list.replace(idx, item);
     Q_EMIT propertyChanged("properties", properties,idx);
 }
 
@@ -113,7 +117,8 @@ void DeviceListWrapper::newDevice(QString uuid)
     if(addDevice(uuid))
     {
         int idx = getIndex(uuid);
-        Q_EMIT itemAdded(_list.value(uuid), idx);
+        qDebug()<<uuid<<"  "<<idx;
+        Q_EMIT itemAdded(_list[idx], idx);
     }
 }
 
@@ -123,7 +128,7 @@ void DeviceListWrapper::deviceRemoved(QString uuid)
     if(index < 0)
         return;
 
-    _list.remove(uuid);
+    _list.removeAt(index);
     Q_EMIT itemRemoved(index);
 }
 
@@ -143,10 +148,12 @@ void DeviceListWrapper::newMapping(QString uuid, QString mapping)
 
 
     bool isRegistered = !DeviceManager::instance()->getMappings().keys(deviceUUID).isEmpty();
-    QVariantMap item = _list[deviceUUID].toMap();
+    int idx = getIndex(deviceUUID);
+    qDebug()<<"idx";
+    QVariantMap item = _list[idx].toMap();
     item["isRegistered"] = isRegistered;
-    _list.insert(deviceUUID, item);
-    Q_EMIT propertyChanged("isRegistered", isRegistered, getIndex(uuid));
+    _list.replace(idx, item);
+    Q_EMIT propertyChanged("isRegistered", isRegistered, idx);
 }
 
 void DeviceListWrapper::mappingRemoved(QString uuid, QString mapping)
@@ -156,14 +163,15 @@ void DeviceListWrapper::mappingRemoved(QString uuid, QString mapping)
 
 void DeviceListWrapper::deviceStateChanged(QString uuid, IDevice::DeviceState state)
 {
-    QVariantMap item = _list[uuid].toMap();
+    int idx = getIndex(uuid);
+    QVariantMap item = _list[idx].toMap();
     bool online = IDevice::ONLINE == state;
     item["online"] = online;
-    _list.insert(uuid, item);
-    Q_EMIT propertyChanged("online", online, getIndex(uuid));
+    _list.replace(idx, item);
+    Q_EMIT propertyChanged("online", online, idx);
 }
 
 QVariantList DeviceListWrapper::getListData() const
 {
-    return _list.values();
+    return _list;
 }

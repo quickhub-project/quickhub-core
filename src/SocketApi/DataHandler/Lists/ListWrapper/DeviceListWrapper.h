@@ -21,7 +21,7 @@ public:
     virtual QVariantList getListData() const override;
 
 private:
-    QVariantMap _list;
+    QVariantList _list;
     QVariantMap toMap(IDevice* device) const;
     bool addDevice(QString uuid);
     int getIndex(QString uuid) const;

@@ -158,11 +158,9 @@ void SocketServer::newConnection()
 
 void SocketServer::newVirtualConnection(ISocket *handle)
 {
-//    _handles << handle;
     handle->setParent(this);
     connect(handle, &ISocket::messageReceived, this, &SocketServer::messageReceived);
     connect(handle, &ISocket::disconnected, this, &SocketServer::handleDisconnected);
-    // connect(handle, &ISocket::destroyed, this, &SocketServer::handleDestroyed);
 }
 
 
@@ -200,14 +198,6 @@ void SocketServer::handleDisconnected()
     }
 }
 
-//void SocketServer::handleDestroyed()
-//{
-//    ISocket* handle = qobject_cast<ISocket *>(sender());
-//    if (handle)
-//    {
-//        _handles.removeAll(handle);
-//    }
-//}
 
 void SocketServer::connectionDisconnected()
 {

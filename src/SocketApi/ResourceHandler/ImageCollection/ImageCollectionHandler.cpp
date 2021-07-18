@@ -31,7 +31,6 @@ void ImageCollectionHandler::handleMessage(QVariant message, ISocket *handle)
 
 void ImageCollectionHandler::imageAddedSlot(QString uuid)
 {
-    qDebug()<<"IMAGE ADDED SLOT";
     QVariantMap msg;
     msg["command"] = "imgcoll:new";
     QVariantMap item;

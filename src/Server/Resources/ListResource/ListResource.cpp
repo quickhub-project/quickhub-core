@@ -79,7 +79,6 @@ int ListResource::getCount() const
 
 ListResource::ModificationResult ListResource::appendItem(QVariant data, QString token)
 {
-    qDebug().noquote()<<QJsonDocument::fromVariant(data).toJson();
     iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
 
     if(identity.isNull() || !_allowUserAccess)
