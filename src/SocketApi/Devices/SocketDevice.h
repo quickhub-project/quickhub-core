@@ -33,6 +33,7 @@ class SocketDevice : public IDevice
 
 public:
     explicit SocketDevice(QObject *parent = nullptr);
+    ~SocketDevice(){qDebug()<<"RIP Device";}
     void init(QVariantMap data, ISocket* handle);
     QString macID() const;
     QString uuid() const override;
@@ -49,6 +50,11 @@ public:
     bool enableAuthentificationKey() override;
     DeviceError startFirmwareUpdate(QVariant args) override;
     virtual int getFirmwareVersion() const override;
+    bool setToken(QString token) override;
+
+    //IIDentity
+    virtual QString         identityID() const override ;
+    QMap<QString, bool>     getRequestedPermissions() const override;
 
 private:
     QString getPropertySetterFunc(QString propertyName) const;
@@ -57,6 +63,8 @@ private:
     QVariantMap                 _properties;
     QVariantList                _functions;
     QMap<QString, QVariantMap>  _functionParameters;
+    QMap<QString, bool>         _permissions;
+    QString                     _token;
 
     QString             _macID;
     QString             _shortID;

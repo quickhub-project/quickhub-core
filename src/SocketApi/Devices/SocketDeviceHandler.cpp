@@ -21,20 +21,19 @@ bool SocketDeviceHandler::handleRequest(QVariantMap message, ISocket *socket)
     {
         QVariantMap data = message["parameters"].toMap();
         QString uuid = data["id"].toString();
-        // TODO check key
-        SocketDevice* device = qobject_cast<SocketDevice*>(DeviceManager::instance()->getDeviceByUuid(uuid));
+        QSharedPointer<SocketDevice> device = qSharedPointerObjectCast<SocketDevice>(DeviceManager::instance()->getDeviceByUuid(uuid));
         socket->setKeepAlive(15000, 5000); // before: 30s / 10s
-        if(device != nullptr)
+        if(device)
         {
-            //update the already existing handle with the new property values
-            device->init(message["parameters"].toMap(), socket);
+            //update the already existing instance with the new property values
+            device->deregistered(device->uuid());
         }
         else
         {
-            device = new SocketDevice();
-            device->init(message["parameters"].toMap(), socket);
-            DeviceManager::instance()->registerDevice(device);
+            device = QSharedPointer<SocketDevice>(new SocketDevice());
         }
+        device->init(message["parameters"].toMap(), socket);
+        DeviceManager::instance()->registerDevice(qSharedPointerObjectCast<IDevice>(device));
 
         return true;
     }

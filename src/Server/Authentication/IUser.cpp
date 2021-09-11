@@ -16,12 +16,11 @@ void IUser::addToken(QString token)
     Q_EMIT dataChanged();
 }
 
-bool IUser::removeToken(QString token)
+void IUser::removeToken(QString token)
 {
-    bool remove =_tokens.remove(token);
+    _tokens.remove(token);
     Q_EMIT sessionCountChanged();
     Q_EMIT dataChanged();
-    return remove;
 }
 
 void IUser::removeAllTokens()

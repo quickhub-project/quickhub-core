@@ -28,7 +28,7 @@ DeviceListWrapper::DeviceListWrapper(QObject* parent) : IList(parent)
     }
 }
 
-QVariantMap DeviceListWrapper::toMap(IDevice *device) const
+QVariantMap DeviceListWrapper::toMap(QSharedPointer<IDevice> device) const
 {
     bool isRegistered = !DeviceManager::instance()->getMappings().keys(device->uuid()).isEmpty();
     QVariantMap deviceData;
@@ -43,10 +43,10 @@ QVariantMap DeviceListWrapper::toMap(IDevice *device) const
 
 bool DeviceListWrapper::addDevice(QString uuid)
 {
-    IDevice* device = DeviceManager::instance()->getDeviceByUuid(uuid);
+    iDevicePtr device = DeviceManager::instance()->getDeviceByUuid(uuid);
     if(device)
     {
-        connect(device, &IDevice::deviceStateChanged, this, &DeviceListWrapper::deviceStateChanged);
+        connect(device.data(), &IDevice::deviceStateChanged, this, &DeviceListWrapper::deviceStateChanged);
         _list.append(toMap(device));
         return true;
     }

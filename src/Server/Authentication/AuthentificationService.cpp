@@ -173,13 +173,10 @@ bool AuthenticationService::logout(QString token)
         _tokenToUserMap.remove(token);
         _tokenToExpiration.remove(token);
         _lock.unlock();
+        identity->removeToken(token);
 
-        iUserPtr user = qSharedPointerCast<IUser>(identity);
-        if(!user.isNull())
-            user->removeToken(token);
-
-        qInfo()<< user->identityID()+" logged out. (still "<<user->sessionCount()<<" sessions open)";
-        Q_EMIT sessionClosed(user->identityID(), token);
+        qInfo()<< identity->identityID()+" logged out.";
+        Q_EMIT sessionClosed(identity->identityID(), token);
         return true;
     }
     return false;

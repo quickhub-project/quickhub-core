@@ -22,9 +22,14 @@ DeviceHandle::DeviceHandle(QString uuid, QString path, QObject *parent) : IResou
 {
     connect(DeviceManager::instance(), &DeviceManager::deviceRegistered, this, &DeviceHandle::deviceRegistered);
     connect(DeviceManager::instance(), &DeviceManager::deviceDeregistered, this, &DeviceHandle::deviceDeregistered);
-    IDevice* device = DeviceManager::instance()->getDeviceByUuid(_uuid);
-    if(device) // will be only the case in "set mapping" process
+    iDevicePtr device = DeviceManager::instance()->getDeviceByUuid(_uuid);
+    // will be only the case in "set mapping" process in all other cases the device handle is
+    // created at application startup
+    if(device)
+    {
+        setPermissions(device->getRequestedPermissions());
         setDevice(device);
+    }
     else
         loadLastData();
 }
@@ -61,6 +66,14 @@ const QVariantMap DeviceHandle::getData()
         properties.insert(propIt.key(), propIt.value()->toMap());
     }
 
+    QMapIterator<QString, bool> permIt(_permissions);
+    QVariantMap permissions;
+    while(permIt.hasNext())
+    {
+        permIt.next();
+        permissions.insert(permIt.key(), permIt.value());
+    }
+
     data["properties"] = properties;
     data["functions"] = _functions;
     data["type"] = _type;
@@ -69,6 +82,7 @@ const QVariantMap DeviceHandle::getData()
     data["authkey"] = _authentificationKey;
     data["enableauthkey"] = _enableSecureCheck;
     data["shortID"] = _shortID;
+    data["permissions"] = permissions;
     _lock.unlock();
     return data;
 }
@@ -118,7 +132,7 @@ QString DeviceHandle::getDescription() const
     return _description;
 }
 
-bool DeviceHandle::setDevice(IDevice *device)
+bool DeviceHandle::setDevice(QSharedPointer<IDevice> device)
 {
     if(device == nullptr)
         return false;
@@ -133,18 +147,30 @@ bool DeviceHandle::setDevice(IDevice *device)
         removeDevice();
 
     setUuid(device->uuid());
-    connect(device, &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
-    connect(device, &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
-    connect(device, &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
-    connect(device, &IDevice::forcePropertySync, this, &DeviceHandle::syncDevice);
-    //_deviceOnline = true;
+    connect(device.data(), &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
+    connect(device.data(), &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
+    connect(device.data(), &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
+    connect(device.data(), &IDevice::forcePropertySync, this, &DeviceHandle::syncDevice);
 
     _lock.lockForWrite();
     _device = device;
     _deviceSate = device->getDeviceState();
     _firmwareVersion = device->getFirmwareVersion();
     _temporary = false;
+    if(!_permissions.isEmpty())
+    {
+        _token = AuthenticationService::instance()->login(device);
+    }
+    else
+        _token = "";
     _lock.unlock();
+
+    if(!_permissions.isEmpty())
+    {
+        device->setGrantedPermissions(_permissions);
+        device->setToken(_token);
+    }
+
     Q_EMIT deviceStateChanged(_uuid, _deviceSate);
     Q_EMIT temporaryChanged(_uuid, _temporary);
     syncDevice();
@@ -173,10 +199,10 @@ bool DeviceHandle::removeDevice()
     locker.unlock();
 
     setUuid("");
-    disconnect(_device, &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
-    disconnect(_device, &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
-    disconnect(_device, &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
-    disconnect(_device, &IDevice::forcePropertySync, this, &DeviceHandle::syncDevice);
+    disconnect(_device.data(), &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
+    disconnect(_device.data(), &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
+    disconnect(_device.data(), &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
+    disconnect(_device.data(), &IDevice::forcePropertySync, this, &DeviceHandle::syncDevice);
     _lock.lockForWrite();
     _deviceSate = IDevice::OFFLINE;
     _temporary = true;
@@ -366,6 +392,16 @@ void DeviceHandle::loadLastData()
     if(data.isEmpty())
         return;
 
+
+     QVariantMap map = data["permissions"].toMap();
+     QMapIterator<QString, QVariant> it(map);
+     QMap<QString, bool> permissionMap;
+     while (it.hasNext())
+     {
+         it.next();
+          permissionMap.insert(it.key(), it.value().toBool());
+     }
+
     _lock.lockForWrite();
     _type = data["type"].toString();
     _permissionChecker = DevicePermissionManager::instance()->getDevicePermissionChecker(_type);
@@ -375,6 +411,7 @@ void DeviceHandle::loadLastData()
     _authentificationKey = data["authkey"].toUInt();
     _enableSecureCheck = data["enableauthkey"].toBool();
     _lastOnline = data["lastOnline"].toLongLong();
+    _permissions = permissionMap;
     _lock.unlock();
 
     QVariantMap properties = data["properties"].toMap();
@@ -398,6 +435,12 @@ void DeviceHandle::registerPropertyObject(QString name, DeviceProperty *prop)
     Q_EMIT newPropertyObject(prop);
 }
 
+void DeviceHandle::setPermissions(const QMap<QString, bool> &permissions)
+{
+    _permissions = permissions;
+    save();
+}
+
 bool DeviceHandle::getEnableSecureCheck() const
 {
     QReadLocker locker(&_lock);
@@ -415,6 +458,17 @@ IDevice::DeviceError DeviceHandle::startFirmwareUpdate(QVariant args)
 int DeviceHandle::getFirmwareVersion()
 {
     return _firmwareVersion;
+}
+
+QVariantMap DeviceHandle::getPermissions()
+{
+    QVariantMap map;
+    QMapIterator<QString, bool> it(_permissions);
+    while(it.hasNext()){
+        it.next();
+        map.insert(it.key(), it.value());
+    }
+    return map;
 }
 
 quint32 DeviceHandle::getAuthentificationKey() const
@@ -440,7 +494,7 @@ void DeviceHandle::sendPropertyToDevice(QString name, QVariant value)
         return;
 
     _lock.lockForRead();
-    IDevice* device = _device;
+    iDevicePtr device = _device;
     _lock.unlock();
     if(device != nullptr)
     {
@@ -471,15 +525,16 @@ void DeviceHandle::deviceDeregistered(QString uuid)
     if(uuid != _uuid || _device == nullptr)
         return;
 
-    disconnect(_device, &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
-    disconnect(_device, &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
-    disconnect(_device, &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
+    disconnect(_device.data(), &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
+    disconnect(_device.data(), &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
+    disconnect(_device.data(), &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
     locker.unlock();
     save();
 
     _lock.lockForWrite();
     _lastOnline = QDateTime::currentMSecsSinceEpoch();
     _deviceSate = IDevice::OFFLINE;
+    AuthenticationService::instance()->logout(_token);
     _device = nullptr;
     _lock.unlock();
     Q_EMIT deviceStateChanged(_uuid, IDevice::OFFLINE);
@@ -495,7 +550,7 @@ void DeviceHandle::deviceRegistered(QString uuid)
     {
         locker.unlock();
 
-        IDevice* device = DeviceManager::instance()->getDeviceByUuid(uuid);
+        iDevicePtr device = DeviceManager::instance()->getDeviceByUuid(uuid);
         if(!device)
             return;
 
@@ -509,13 +564,17 @@ void DeviceHandle::deviceRegistered(QString uuid)
                 qDebug()<< "SHOULD: "+QString::number(_authentificationKey);
                 return;
             }
-            else
-            {
-                qDebug()<<"Check succeeded: "<<device->getAuthentificationKey();
-            }
-        }
-        locker.unlock();
 
+            if(_permissions != device->getRequestedPermissions())
+            {
+                qWarning()<<"Unconfirmed permission request! "+_uuid+"! - Device rejected.";
+                return;
+            }
+
+            qDebug()<<"Check succeeded: "<<device->getAuthentificationKey();
+        }
+
+        locker.unlock();
         setDevice(device);
     }
 }

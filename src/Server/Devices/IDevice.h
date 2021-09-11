@@ -24,9 +24,11 @@
 
 #include <QObject>
 #include <QVariant>
+#include <QMap>
 #include "qhcore_global.h"
+#include "Server/Authentication/IIdentitiy.h"
 
-class COREPLUGINSHARED_EXPORT IDevice : public QObject
+class COREPLUGINSHARED_EXPORT IDevice : public QObject, public IIdentity
 {
     Q_OBJECT
     Q_PROPERTY(QString type     READ type   NOTIFY typeChanged)
@@ -189,6 +191,19 @@ public:
     */
     virtual int         getFirmwareVersion() const;
 
+    /*!
+      Returns the permissions requested by the device itself. This does not necessarily
+      correspond to the permissions that the unit is actually entitled to after provisioning.
+      Which permissions the device will actually have later is decided during the provisioning process.
+    */
+   virtual QMap<QString, bool> getRequestedPermissions() const = 0;
+
+
+    virtual bool setToken(QString token) {Q_UNUSED(token); return false;};
+    virtual bool isAuthorizedTo(QString permission) override;
+    QMap<QString, bool> getGrantedPermissions() const;
+    void setGrantedPermissions(const QMap<QString, bool> &grantedPermissions);
+
 signals:
     // emit this signal, when you know that your device was propably offline
     // e.g. after connection loss
@@ -200,8 +215,9 @@ signals:
     void typeChanged();
     void uuidChanged();
 
+private:
+    QMap<QString, bool> _grantedPermissions;
 
-public slots:
 };
 
 #endif // IDEVICE_H

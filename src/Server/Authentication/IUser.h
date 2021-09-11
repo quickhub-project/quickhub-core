@@ -57,14 +57,14 @@ public:
         This function is exclusively user by AuthenticationService when a user logs in.
         A session token will be added to the user.
     */
-    void   addToken(QString token);
+    void   addToken(QString token) override;
 
     /*!
         \fn void IUser::removeToken(QString token)
         This function is exclusively user by AuthenticationService when a user logs out.
         The session token will be removed from its user.
     */
-    bool   removeToken(QString token);
+    void   removeToken(QString token) override;
 
     /*!
         \fn void IUser::removeAllTokens()

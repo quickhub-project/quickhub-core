@@ -122,6 +122,7 @@ QVariantMap DeviceHandleHandler::getDumpMessage()
 
     parameters["props"] = _deviceHandle->properties();
     parameters["funcs"] = _deviceHandle->getFunctions();
+    parameters["permissions"] = _deviceHandle->getPermissions();
     parameters["type"] = _deviceHandle->type();
     parameters["desc"] = _deviceHandle->getDescription();
     parameters["uuid"] = _deviceHandle->uuid();

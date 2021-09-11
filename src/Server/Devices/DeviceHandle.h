@@ -72,7 +72,7 @@ public:
         For external plugins there is normally no reason to use this function.
         \sa IDevice
     */
-    bool                            setDevice(IDevice* device);
+    bool                            setDevice(QSharedPointer<IDevice> device);
 
     /*!
         \fn void DeviceHandle::removeDevice()
@@ -193,6 +193,9 @@ public:
     IDevice::DeviceError            startFirmwareUpdate(QVariant args);
     int                             getFirmwareVersion();
 
+    QVariantMap                     getPermissions();
+    void                            setPermissions(const QMap<QString, bool> &permissions);
+
 private:
     /*!
         These functions are overwritten from IResource and are for persistance purposes.
@@ -212,6 +215,7 @@ private:
     void                            loadLastData();
     void                            registerPropertyObject(QString name,DeviceProperty* prop);
     QMap<QString, DeviceProperty*>  _properties;
+    QMap<QString, bool>             _permissions;
     bool                            _temporary = false;
     bool                            _initialized = false;
     QStringList                     _mappings;
@@ -220,14 +224,15 @@ private:
     QString                         _uuid;
     QString                         _shortID;
     QVariantList                    _functions;
-    IDevice*                        _device = nullptr;
+    QSharedPointer<IDevice>         _device;
     IDevice::DeviceState            _deviceSate = IDevice::OFFLINE;
     QString                         _type;
     QString                         _description;
     quint32                         _authentificationKey = 0;
+    QString                         _token;
     int                             _firmwareVersion;
     bool                            _enableSecureCheck = false;
-    mutable QReadWriteLock                  _lock;
+    mutable QReadWriteLock          _lock;
   QSharedPointer<IDevicePermissionChecker>      _permissionChecker;
 
 signals:

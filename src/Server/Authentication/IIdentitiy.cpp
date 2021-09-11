@@ -21,3 +21,13 @@ qint64 IIdentity::lastActivity() const
 {
     return _lastActivity;
 }
+
+void IIdentity::removeToken(QString token)
+{
+    Q_UNUSED(token)
+}
+
+void IIdentity::addToken(QString token)
+{
+    Q_UNUSED(token)
+}

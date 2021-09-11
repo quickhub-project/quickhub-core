@@ -17,6 +17,21 @@ int IDevice::getFirmwareVersion() const
     return -1;
 }
 
+bool IDevice::isAuthorizedTo(QString permission)
+{
+    return _grantedPermissions.value(permission, false);
+}
+
+QMap<QString, bool> IDevice::getGrantedPermissions() const
+{
+    return _grantedPermissions;
+}
+
+void IDevice::setGrantedPermissions(const QMap<QString, bool> &grantedPermissions)
+{
+    _grantedPermissions = grantedPermissions;
+}
+
 QVariantList IDevice::getSkills() const
 {
     return QVariantList();

@@ -22,7 +22,7 @@ public:
 
 private:
     QVariantList _list;
-    QVariantMap toMap(IDevice* device) const;
+    QVariantMap toMap(QSharedPointer<IDevice> device) const;
     bool addDevice(QString uuid);
     int getIndex(QString uuid) const;
     void handleMessage(QVariant msg, ISocket *handle) override;

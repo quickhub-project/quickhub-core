@@ -118,7 +118,7 @@ public:
     */
     QString login(QString user, QString password, AuthenticationService::ErrorCode* error = nullptr);
 
-    QString login(iIdentityPtr identity, ErrorCode *error);
+    QString login(iIdentityPtr identity, ErrorCode *error = nullptr);
 
     /*!
         \fn bool logout(QString token)

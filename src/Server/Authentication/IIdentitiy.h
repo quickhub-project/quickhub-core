@@ -16,29 +16,32 @@ public:
     IIdentity();
 
     /*!
-        \fn virtual bool isAuthorizedTo(QString permission) = 0;
+        \fn virtual bool IIdentity::isAuthorizedTo(QString permission) = 0;
         Returns true if the identity has the apropriate permission.
     */
     virtual bool isAuthorizedTo(QString permission) = 0;
 
     /*!
-        \fn void IUser::setLastActivity(const qint64 &lastActivity)
+        \fn void IIdentity::setLastActivity(const qint64 &lastActivity)
         Is used by AuthenticationService. Stores the last activity timestamp.
     */
     void   setLastActivity(const qint64 &lastActivity);
 
     /*!
-        \fn qint64 IUser::lastActivity() const;
+        \fn qint64 IIdentity::lastActivity() const;
         Returns the last activity timestamp
     */
     qint64 lastActivity() const;
 
     /*!
-        \fn QString IUser::userID() const = 0;
+        \fn QString IIdentity::identityID() const = 0;
         Here a unique ID must be returned, which - in contrast to the login - must not change anymore.
-        This ID is used to store user related data in the database.
+        This ID is used to store identity related data in the database.
     */
-    virtual QString         identityID() const = 0;
+    virtual QString identityID() const = 0;
+
+    virtual void removeToken(QString token);
+    virtual void addToken(QString token);
 
 
 private:

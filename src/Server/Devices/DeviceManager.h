@@ -30,6 +30,7 @@
 #include <QSharedPointer>
 #include <QWeakPointer>
 
+typedef QSharedPointer<IDevice> iDevicePtr;
 typedef QSharedPointer<DeviceHandle> deviceHandlePtr;
 typedef QWeakPointer<DeviceHandle> weakDeviceHandlePtr;
 
@@ -42,13 +43,13 @@ public:
     ~DeviceManager();
 
     /*!
-        \fn bool DeviceManager::registerDevice(IDevice* device)
+        \fn bool DeviceManager::registerDevice(iDevicePtr device)
         This function needs to be called every time a device logs on.
         Regardless of whether it is a hardware device or a virtual software device.
         If the Device is already provisioned, the corresponding handle is assigned
         the appropriate IDevice instance.
     */
-    bool registerDevice(IDevice* device);
+    bool registerDevice(iDevicePtr device);
 
     /*!
         \fn bool DeviceManager::exists(QString uuid)
@@ -128,7 +129,7 @@ public:
         \note You should NOT use IDevice* instances to work and communicate with devices -
         Use DeviceHandles, accessible via getHandle(..) or getHandlyByMapping(..) instead!
     */
-    IDevice*                  getDeviceByUuid(QString uuid) const;
+    iDevicePtr getDeviceByUuid(QString uuid) const;
 
     /*!
         \fn QString getDeviceByMapping() const
@@ -149,7 +150,7 @@ public:
 private:
     QMap<QString, deviceHandlePtr>      _handles; // uuid -> handle
     QMap<QString, weakDeviceHandlePtr>  _handleByMappings; // mapping -> handle
-    QMap<QString, IDevice*>             _deviceMap; // uuid -> device
+    QMap<QString, iDevicePtr>           _deviceMap; // uuid -> device
     QMap<QString, QString>              _deviceMappings; // mapping -> uuid
     QMap<QString, QString>              _shortIDtoUid; // shortID -> uuid
     QMap<QString, QString>              _preparedHooks; // hooks that will be set when device comes online

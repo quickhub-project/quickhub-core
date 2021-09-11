@@ -20,11 +20,11 @@
 
 Q_GLOBAL_STATIC(DeviceManager, deviceManager);
 
-bool DeviceManager::registerDevice(IDevice *device)
+bool DeviceManager::registerDevice(iDevicePtr device)
 {
     QString uuid = device->uuid();
     _shortIDtoUid.insert(device->shortId().toUpper(), uuid);
-    connect(device, &IDevice::deregistered, this, &DeviceManager::deregisterDevice);
+    connect(device.data(), &IDevice::deregistered, this, &DeviceManager::deregisterDevice);
     device->setParent(this);
     qInfo()<<"Device registered: "<<uuid;
     _deviceMap.insert(uuid, device);
@@ -134,7 +134,7 @@ QStringList DeviceManager::getDevices() const
     return _deviceMap.keys();
 }
 
-IDevice *DeviceManager::getDeviceByUuid(QString uuid) const
+iDevicePtr DeviceManager::getDeviceByUuid(QString uuid) const
 {
     return _deviceMap.value(uuid, nullptr);
 }
@@ -147,7 +147,7 @@ QString DeviceManager::getDeviceByMapping(QString mapping) const
 
 QString DeviceManager::getTypeForUuid(QString uuid) const
 {
-    IDevice* device = _deviceMap.value(uuid);
+    iDevicePtr device = _deviceMap.value(uuid);
     if(device)
     {
         return device->type();
@@ -217,7 +217,7 @@ Err::CloudError DeviceManager::unhook(QString mapping)
 
 Err::CloudError DeviceManager::hook(QString mapping, QString uuid, bool force)
 {
-    IDevice* device = _deviceMap.value(uuid, nullptr);
+    iDevicePtr device = _deviceMap.value(uuid, nullptr);
     if(!device)
     {
         return Err::PERMISSION_DENIED; // Device needs to be online
@@ -264,11 +264,12 @@ Err::CloudError DeviceManager::hook(QString mapping, QString uuid, bool force)
     else
     {
         qDebug()<<"Create new handle";
-        deviceHandlePtr handle = addDeviceHandle(uuid);
+        handle = addDeviceHandle(uuid);
         if(!handle.isNull() && value != 0)
                 handle->setAuthentificationKey(value);
     }
 
+    handle->setPermissions(device->getRequestedPermissions());
     Q_EMIT newDeviceMapping(uuid, mapping);
 
     _handleByMappings.remove(mapping);
@@ -354,7 +355,7 @@ void DeviceManager::deregisterDevice(QString uuid)
     if(!_deviceMap.contains(uuid))
         return;
 
-    disconnect(_deviceMap.value(uuid), &IDevice::deregistered, this, &DeviceManager::deregisterDevice);
+    disconnect(_deviceMap.value(uuid).data(), &IDevice::deregistered, this, &DeviceManager::deregisterDevice);
     _deviceMap.remove(uuid);
     qInfo()<<"Device deregistered: "<<uuid;
     Q_EMIT deviceDeregistered(uuid);

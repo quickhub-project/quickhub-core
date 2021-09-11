@@ -26,6 +26,14 @@ void SocketDevice::init(QVariantMap data, ISocket *handle)
     _uuid = _macID;
     _functions = data["functions"].toList();
 
+    QVariantMap permissions = data["permissions"].toMap();
+    QMapIterator<QString, QVariant> it(permissions);
+    while(it.hasNext())
+    {
+        it.next();
+        _permissions.insert(it.key(), it.value().toBool());
+    }
+
     QListIterator<QVariant> funcIt(_functions);
     while(funcIt.hasNext())
     {
@@ -132,7 +140,6 @@ void SocketDevice::connectionDisconnected()
 
     _deviceConnection = nullptr;
     Q_EMIT deregistered(_uuid);
-    this->deleteLater();
 }
 
 void SocketDevice::sendAck()
@@ -266,9 +273,29 @@ int SocketDevice::getFirmwareVersion() const
     return major * 1000 + minor;
 }
 
+bool SocketDevice::setToken(QString token)
+{
+    _token = token;
+    QVariantMap msg;
+    msg["cmd"] = "settoken";
+    msg["params"] = token;
+    _deviceConnection->sendVariant(msg);
+    return true;
+}
+
+QString SocketDevice::identityID() const
+{
+    return _uuid;
+}
+
 QString SocketDevice::getPropertySetterFunc(QString propertyName) const
 {
     QChar firstChar = propertyName.at(0).toUpper();
     return "set" + propertyName.replace(0,1,firstChar);
+}
+
+QMap<QString, bool> SocketDevice::getRequestedPermissions() const
+{
+    return _permissions;
 }
 
