@@ -103,6 +103,9 @@ void DeviceListWrapper::devicePropertyChanged(QString uuid, QString property, QV
         return;
 
     int idx = getIndex(uuid);
+    if(idx < 0)
+        return;
+
     QVariantMap item = _list[idx].toMap();
     QVariantMap properties = item["properties"].toMap();
     properties[property] = value;
@@ -117,6 +120,9 @@ void DeviceListWrapper::newDevice(QString uuid)
     if(addDevice(uuid))
     {
         int idx = getIndex(uuid);
+        if(idx < 0)
+            return;
+
         qDebug()<<uuid<<"  "<<idx;
         Q_EMIT itemAdded(_list[idx], idx);
     }
@@ -149,7 +155,10 @@ void DeviceListWrapper::newMapping(QString uuid, QString mapping)
 
     bool isRegistered = !DeviceManager::instance()->getMappings().keys(deviceUUID).isEmpty();
     int idx = getIndex(deviceUUID);
-    qDebug()<<"idx";
+
+    if(idx < 0)
+        return;
+
     QVariantMap item = _list[idx].toMap();
     item["isRegistered"] = isRegistered;
     _list.replace(idx, item);
@@ -164,6 +173,9 @@ void DeviceListWrapper::mappingRemoved(QString uuid, QString mapping)
 void DeviceListWrapper::deviceStateChanged(QString uuid, IDevice::DeviceState state)
 {
     int idx = getIndex(uuid);
+    if(idx < 0)
+        return;
+
     QVariantMap item = _list[idx].toMap();
     bool online = IDevice::ONLINE == state;
     item["online"] = online;
