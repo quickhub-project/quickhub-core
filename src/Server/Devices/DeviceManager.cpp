@@ -15,9 +15,6 @@
 #include "../Authentication/AuthentificationService.h"
 #include "../Authentication/User.h"
 
-
-//#include <QRandomGenerator>
-
 Q_GLOBAL_STATIC(DeviceManager, deviceManager);
 
 bool DeviceManager::registerDevice(iDevicePtr device)
