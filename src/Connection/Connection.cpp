@@ -241,7 +241,8 @@ void Connection::variantMessageReceived(QVariant message)
 
    if(uuid.isEmpty())
    {
-       QListIterator<VirtualConnection*> it(_handles.values());
+       auto tmpHandles = _handles.values();
+       QListIterator<VirtualConnection*> it(tmpHandles);
        while(it.hasNext())
        {
             qDebug()<<"No valid UUID -> Broadcast!";

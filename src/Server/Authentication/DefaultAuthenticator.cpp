@@ -235,11 +235,12 @@ void DefaultAuthenticator::save()
 
 void DefaultAuthenticator::deleteUser(userPtr user)
 {
-    QSetIterator<QString> it(user->getTokens());
+    auto tmpTokens = user->getTokens();
+    QSetIterator<QString> it(tmpTokens);
     while(it.hasNext())
         AuthenticationService::instance()->logout(it.next());
-
-    it = QSetIterator<QString>(user->getSteadyTokens());
+    auto tmpSteadyTokens = user->getSteadyTokens();
+    it = QSetIterator<QString>(tmpSteadyTokens);
     _lock.lockForWrite();
     _idToUserMap.remove(user->identityID());
     _users.removeAll(user);

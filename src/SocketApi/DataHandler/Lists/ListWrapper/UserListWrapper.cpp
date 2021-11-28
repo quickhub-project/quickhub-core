@@ -13,7 +13,8 @@ UserListWrapper::UserListWrapper(QObject *parent) : IList(parent)
     connect(&_mapper, SIGNAL(mapped(QString)), this, SLOT(dataChanged(QString)));
     connect(DefaultAuthenticator::instance(), SIGNAL(userAdded(userPtr)),      this, SLOT(userAdded(userPtr)));
     connect(DefaultAuthenticator::instance(), SIGNAL(userDeleted(userPtr)),    this, SLOT(userDeleted(userPtr)));
-    QVectorIterator<userPtr> it(DefaultAuthenticator::instance()->getUsers());
+    auto tmpUsers = DefaultAuthenticator::instance()->getUsers();
+    QVectorIterator<userPtr> it(tmpUsers);
     while(it.hasNext())
     {
         userPtr user = it.next();

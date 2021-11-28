@@ -19,7 +19,8 @@ DeviceHandleHandler::DeviceHandleHandler(QSharedPointer<DeviceHandle> deviceHand
     connect(deviceHandle.data(), &DeviceHandle::newPropertyObject, this, &DeviceHandleHandler::registerProperty);
     connect(deviceHandle.data(), &DeviceHandle::descriptionChanged, this, &DeviceHandleHandler::deviceDescriptionChanged);
 
-    QMapIterator<QString, DeviceProperty*> it(_deviceHandle->propertyObjects());
+    auto tmpProperties = _deviceHandle->propertyObjects();
+    QMapIterator<QString, DeviceProperty*> it(tmpProperties);
     while(it.hasNext())
     {
         registerProperty(it.next().value());

@@ -17,7 +17,8 @@ ServiceRequestHandler::ServiceRequestHandler(QObject *parent) : IRequestHandler(
         connect(ServiceManager::instance()->service(serviceName), &IService::response, this, &ServiceRequestHandler::sendAnswer);
     });
 
-    QMapIterator<QString, IService*> it(ServiceManager::instance()->getServices());
+    auto tmpServices = ServiceManager::instance()->getServices();
+    QMapIterator<QString, IService*> it(tmpServices);
     while(it.hasNext())
     {
         connect(it.next().value(), &IService::response, this, &ServiceRequestHandler::sendAnswer);
