@@ -140,7 +140,8 @@ QString AuthenticationService::login(iIdentityPtr identity, ErrorCode *error)
 {
     if (_tokenToUserMap.values().contains(identity))
     {
-        *error = PermissionDenied;
+        if(error != nullptr)
+            *error = PermissionDenied;
         return "";
     }
 
