@@ -39,11 +39,15 @@ QSet<QString> IUser::getSteadyTokens() const
     return QSet<QString>();
 }
 
+void IUser::setSessionExpiration(int timeout)
+{
+    _sessionExpiration = timeout;
+}
+
 QString IUser::generateHash(QString pass)
 {
     return QCryptographicHash::hash(pass.toUtf8(), QCryptographicHash::Md5).toHex();
 }
-
 
 QSet<QString> IUser::getTokens() const
 {

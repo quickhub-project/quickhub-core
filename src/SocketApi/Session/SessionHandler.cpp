@@ -27,28 +27,40 @@ bool SessionHandler::handleRequest(QVariantMap message, ISocket *handle)
 
     iUserPtr user = _authenticationService->getUserForToken(token);
 
+    if(command == "user:extendsession")
+    {
+        _authenticationService->validateToken(token);
+        return true;
+    }
+
     if(command == "user:login")
     {
         QString userId = payload["userID"].toString();
         QString password = payload["password"].toString();
         AuthenticationService::ErrorCode error;
         QString token = _authenticationService->login(userId, password, &error);
-        qint64 tokenExpiration = _authenticationService->getTokenExpiration(token);
         QVariantMap answer;
 
         if(error == AuthenticationService::NoError)
         {
-            connect(handle, SIGNAL(destroyed(QObject*)),this,SLOT(sessionConnectionDeleted(QObject*)));
-            _tokenToHandleMap.insert(token, handle);
-            handle->setProperty("token", token);
-            answer["command"] = "user:login:success";
-            QVariantMap payload;
-            payload["token"] = token;
-            payload["tokenExpiration"] = tokenExpiration;
-            payload["user"] =  AuthenticationService::instance()->getUserForToken(token)->userData().toMap();
-            answer["payload"] = payload;
-            handle->sendVariant(answer);
-            return true;
+            auto user =  _authenticationService->getUserForToken(token);
+            if(!user.isNull())
+            {
+                qint64 tokenExpiration =  user->sessionExpiration();
+                connect(handle, SIGNAL(destroyed(QObject*)),this,SLOT(sessionConnectionDeleted(QObject*)));
+                _tokenToHandleMap.insert(token, handle);
+                handle->setProperty("token", token);
+                answer["command"] = "user:login:success";
+                QVariantMap payload;
+                payload["token"] = token;
+                payload["tokenExpiration"] = tokenExpiration;
+                payload["user"] =  user->userData().toMap();
+                answer["payload"] = payload;
+                handle->sendVariant(answer);
+                return true;
+            }
+
+            error = AuthenticationService::UnknownInternalError;
         }
 
         answer["errrorcode"] = error;
@@ -58,10 +70,13 @@ bool SessionHandler::handleRequest(QVariantMap message, ISocket *handle)
         {
             answer["errorstring"] = "Wrong password.";
         }
-
-        if(error == AuthenticationService::UserNotExists)
+        else if(error == AuthenticationService::UserNotExists)
         {
             answer["errorstring"] = "Unknown User.";
+        }
+        else
+        {
+            answer["errorstring"] = "Unknown Internal Error.";
         }
 
         handle->sendVariant(answer);

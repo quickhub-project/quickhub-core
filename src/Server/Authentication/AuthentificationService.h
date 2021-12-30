@@ -27,8 +27,6 @@
 #include <QReadWriteLock>
 #include "qhcore_global.h"
 #include "../Resources/ResourceManager/IResource.h"
-//in seconds
-#define SESSION_TIMEOUT 60*60
 
 class IUser;
 class IAuthenticator;
@@ -76,6 +74,7 @@ public:
         PermissionDenied = -4,
         IncorrectPassword = -5,
         UserNotExists = -6,
+        UnknownInternalError = -7,
     };
     /*!
         \fn void AuthenticationService::registerAuthenticator(IAuthenticator* authenticator)
@@ -93,7 +92,7 @@ public:
     */
     iIdentityPtr validateToken(QString token);
 
-    iUserPtr validateUser(QString userID, QString password, ErrorCode* error = nullptr);
+    iUserPtr validateUser(QString userID, QString password, ErrorCode* error = nullptr) const;
 
     /*!
         \fn void AuthenticationService::getUserForToken(QString token)
@@ -126,19 +125,21 @@ public:
     */
     bool logout(QString token);
 
-
-    iUserPtr getUserForUserID(QString userID);
+    iUserPtr getUserForUserID(QString userID) const;
 
 
 signals:
     void sessionClosed(QString userID, QString token);
 
+private slots:
+    void checkTimeouts();
 
 private:
     QList<IAuthenticator*> _authenticators;
     mutable QReadWriteLock _lock;
     QHash<QString, iIdentityPtr> _tokenToUserMap;
     QHash<QString, qint64> _tokenToExpiration;
+    QTimer _sessionTimeoutKicker;
 
 };
 

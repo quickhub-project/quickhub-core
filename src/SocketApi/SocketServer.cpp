@@ -198,10 +198,8 @@ void SocketServer::handleDisconnected()
     }
 }
 
-
 void SocketServer::connectionDisconnected()
 {
-
     Connection* connection = qobject_cast<Connection*>(sender());
     if(connection)
     {

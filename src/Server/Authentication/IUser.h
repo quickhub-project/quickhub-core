@@ -6,10 +6,12 @@
 
 #ifndef IUSER_H
 #define IUSER_H
+
 #include <QObject>
 #include <QSet>
 #include <QVariant>
 #include <QDebug>
+#include <QProcessEnvironment>
 #include "IIdentitiy.h"
 
 /*!
@@ -49,7 +51,9 @@ public:
         }
     };
 
-    IUser(QObject* parent = nullptr) : QObject(parent){ }
+    IUser(QObject* parent = nullptr) : QObject(parent){
+        _sessionExpiration = QProcessEnvironment::systemEnvironment().value("USER_SESSION_EXPIRATION", "1200").toInt();
+    }
     virtual ~IUser(){}
 
     /*!
@@ -128,10 +132,14 @@ public:
     */
     virtual UserData        userData() const = 0;
 
+    virtual void            setSessionExpiration(int timeout);
+    virtual int             sessionExpiration() const override {return _sessionExpiration;};
+    bool                    multipleSessionsAllowed() const override {return true;};
 
 private:
     QSet<QString>   _tokens;
-    static int instanceCount;
+    int             _sessionExpiration;
+    static int      instanceCount;
 
 protected:
     QString generateHash(QString pass);

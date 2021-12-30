@@ -199,7 +199,11 @@ public:
    virtual QMap<QString, bool> getRequestedPermissions() const = 0;
 
 
-    virtual bool setToken(QString token) {Q_UNUSED(token); return false;};
+    virtual bool setToken(QString token)  {Q_UNUSED(token); return false;};
+    // Device sessions never expire!
+    virtual int sessionExpiration() const override {return 0;};
+    // Devices can only have one session
+    bool multipleSessionsAllowed() const override {return false;};
     virtual bool isAuthorizedTo(QString permission) override;
     QMap<QString, bool> getGrantedPermissions() const;
     void setGrantedPermissions(const QMap<QString, bool> &grantedPermissions);

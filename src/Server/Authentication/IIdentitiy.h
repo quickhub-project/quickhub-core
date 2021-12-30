@@ -40,6 +40,19 @@ public:
     */
     virtual QString identityID() const = 0;
 
+    /*!
+        \fn int IIdentity::sessionExpiration() const = 0;
+        Returns the time (in seconds) that must elapse after the last use of a token before a session token
+        becomes invalid.
+    */
+    virtual int sessionExpiration() const = 0;
+
+    /*!
+        \fn bool IIdentity::multipleSessionsAllowed() const = 0;
+        Returns true if multiple sessions are allowed at the same time with this identity.
+    */
+    virtual bool multipleSessionsAllowed() const = 0;
+
     virtual void removeToken(QString token);
     virtual void addToken(QString token);
 

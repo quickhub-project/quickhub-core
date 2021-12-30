@@ -70,7 +70,7 @@ public:
 
 protected:
     QSet<ISocket*>          _handles;
-    QMap<QString, QPointer<ISocket>> _handleMap;
+    QMultiMap<QString, ISocket*> _tokenToHandleMap;
 
     virtual QString getUUID();
 
@@ -79,7 +79,7 @@ protected:
         This function will send the given QVariantMap as json string via all attached ISocket handles.
         If you answer to a message, you can provide the pointer to the origin sender. The message to the sender will then have a special flag.
     */
-    void deployToAll(QVariantMap msg, ISocket* sender = nullptr, bool requestAck = true);
+    void deployToAll(QVariantMap msg, ISocket* sender = nullptr);
 
 
     /*!
@@ -100,18 +100,13 @@ protected:
 private:
     QString                     _resourceType;
     QMap<QString, Message>      _sentMessages;
-    QTimer                      _timeoutTimer;
     static int                  instanceCount;
 
-
-signals:
-    void timeout(ISocket* resource);
 
 private slots:
      void handleDisconnected();
      void messageReceived(QVariant message);
-     void checkTimeouts();
-
+     void sessionClosed(QString userID, QString token);
      /*!
          This is the function which will be called whenever a connected client sends a message.
          The message needs to be evaluated, the resource if need be modified and all other connected clients notified.
