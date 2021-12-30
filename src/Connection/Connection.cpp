@@ -50,7 +50,8 @@ void Connection::setupConnections()
     QObject::connect(_socket, &QWebSocket::connected, this, &Connection::socketConnected);
     QObject::connect(_socket, &QWebSocket::disconnected, this, &Connection::socketDisconnected);
     QObject::connect(_socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SIGNAL(socketError(QAbstractSocket::SocketError)));
-    QObject::connect(_socket,SIGNAL(binaryMessageReceived(QByteArray)), this,SLOT(messageReceived(QByteArray)));
+    QObject::connect(_socket,SIGNAL(binaryMessageReceived(QByteArray)), this,SLOT(binaryMessageReceived(QByteArray)));
+    QObject::connect(_socket,SIGNAL(textMessageReceived(QString)), this,SLOT(textMessageReceived(QString)));
     QObject::connect(this, &Connection::doSendVariant, this, &Connection::invokeSendingVariant, Qt::QueuedConnection);
 }
 
@@ -61,21 +62,9 @@ Connection::~Connection()
     {
         _socket->close(QWebSocketProtocol::CloseCodeGoingAway);
         qDebug()<<"Connection destroyed!";
-        if(_trhead == nullptr)
-        {
-            delete _socket;
-            _socket = nullptr;
-            qDebug()<<"Socket destroyed!";
-        }
-        else
-        {
-            _trhead->quit();
-        }
-    }
-
-    if(_isocket)
-    {
-
+        delete _socket;
+        _socket = nullptr;
+        qDebug()<<"Socket destroyed!";
     }
 }
 
@@ -183,12 +172,18 @@ void Connection::handleDeleted()
 void Connection::invokeSendingVariant(const QVariant &data)
 {
     if(_socket)
-        _socket->sendBinaryMessage(QJsonDocument::fromVariant(data.toMap()).toJson());
+    {
+        if(_binary)
+            _socket->sendBinaryMessage(QJsonDocument::fromVariant(data.toMap()).toJson());
+        else
+            _socket->sendTextMessage(QJsonDocument::fromVariant(data.toMap()).toJson());
+    }
     else if(_isocket)
         _isocket->sendVariant(data);
 }
-void Connection::messageReceived(QByteArray message)
+void Connection::binaryMessageReceived(QByteArray message)
 {
+    _binary = true;
     QJsonParseError error;
     QVariantMap msg = QJsonDocument::fromJson(message, &error).toVariant().toMap();
     if(error.error != QJsonParseError::NoError)
@@ -250,6 +245,19 @@ void Connection::variantMessageReceived(QVariant message)
        }
        return;
    }
+}
+
+void Connection::textMessageReceived(QString message)
+{
+    _binary = false;
+    QJsonParseError error;
+    QVariantMap msg = QJsonDocument::fromJson(message.toUtf8(), &error).toVariant().toMap();
+    if(error.error != QJsonParseError::NoError)
+    {
+        qDebug()<<"Connection: Inavlid Json.";
+        return;
+    }
+    variantMessageReceived(msg);
 }
 
 void Connection::sendPing()

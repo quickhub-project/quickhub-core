@@ -93,6 +93,7 @@ private:
     QTimer*                             _keepAliveTimer = nullptr;
     QTimer*                             _timeoutTimer =  nullptr;
     QThread*                            _trhead = nullptr;
+    bool                                _binary = true;
 
 signals:
     void connected();
@@ -104,7 +105,8 @@ private slots:
     void socketDisconnected();
     void socketConnected();
     void variantMessageReceived(QVariant message);
-    void messageReceived(QByteArray message);
+    void binaryMessageReceived(QByteArray message);
+    void textMessageReceived(QString message);
     void sendPing();
     void timeout();
     void handleDeleted();
