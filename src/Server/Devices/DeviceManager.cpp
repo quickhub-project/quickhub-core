@@ -12,6 +12,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QCoreApplication>
+#include <QRandomGenerator>
 #include "../Authentication/AuthentificationService.h"
 #include "../Authentication/User.h"
 
@@ -236,7 +237,7 @@ Err::CloudError DeviceManager::hook(QString mapping, QString uuid, bool force)
     quint32 value = 0;
     if(device->enableAuthentificationKey())
     {
-        value = qrand();//QRandomGenerator::global()->generate();
+        value = QRandomGenerator::global()->generate();
         device->setAuthentificationKey(value);
     }
 
