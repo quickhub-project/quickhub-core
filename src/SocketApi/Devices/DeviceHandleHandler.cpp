@@ -45,9 +45,8 @@ void DeviceHandleHandler::handleMessage(QVariant message, ISocket *handle)
         QString functionName = parameters["funcname"].toString();
         QVariantMap functionParameters = parameters["funcparams"].toMap();
         QString cbID  = parameters["cbID"].toString();
-        int returnVal = _deviceHandle->triggerFunction(functionName, functionParameters, token, cbID);
+        auto returnVal = _deviceHandle->triggerFunction(functionName, functionParameters, token, cbID);
         QVariantMap msg;
-        msg["errorcode"] = returnVal > 0 ? 0 : returnVal;
         if(returnVal == IDevice::NO_ERROR)
         {
             if(!cbID.isEmpty())
@@ -55,31 +54,17 @@ void DeviceHandleHandler::handleMessage(QVariant message, ISocket *handle)
                 _cbMap.insert(cbID, handle);
                 connect(handle, &ISocket::disconnected, this, &DeviceHandleHandler::socketDisconnectedSlot, Qt::UniqueConnection);
             }
-            msg["command"] = "device:call:success";
-            handle->sendVariant(msg);
-            return;
         }
-        else
-            msg["command"] = "device:call:failed";
 
-        if(returnVal == IDevice::FUNCTION_NOT_EXIST)
-            msg["errorstring"] = "Unknown function.";
-
-        if(returnVal == IDevice::DEVICE_NOT_AVAILABLE)
-            msg["errorstring"] = "Device is offline.";
-
-        if(returnVal == IDevice::PERMISSION_DENIED)
-            msg["errorstring"] = "Permission Denied.";
-
-        handle->sendVariant(msg);
-        return;
+        handleError(command, returnVal, handle);
     }
 
     if(command == "device:setproperty")
     {
         QString property = parameters["property"].toString();
         QVariant value = parameters["value"];
-        _deviceHandle->setDeviceProperty(property, value, token);
+        auto err = _deviceHandle->setDeviceProperty(property, value, token);
+        handleError(command, err, handle);
         return;
     }
 
@@ -89,7 +74,6 @@ void DeviceHandleHandler::handleMessage(QVariant message, ISocket *handle)
         _deviceHandle->setDescription(description, token);
         return;
     }
-
 
     if(command == "device:meta:set")
     {
@@ -107,11 +91,40 @@ void DeviceHandleHandler::handleMessage(QVariant message, ISocket *handle)
         }
         else
         {
-            msg["errorstring"] = "Property does not exist.";
-            msg["errorcode"] = IDevice::PROPERTY_NOT_EXISTS;
-            handle->sendVariant(msg);
+           handleError(command, IDevice::PROPERTY_NOT_EXISTS, handle);
         }
     }
+}
+
+void DeviceHandleHandler::handleError(QString command, IDevice::DeviceError error, ISocket *socket)
+{
+    QVariantMap msg;
+    msg["errorcode"] = error > 0 ? 0 : error;
+
+    if(error >= 0)
+    {
+        msg["command"] = command + ":success";
+        socket->sendVariant(msg);
+        return;
+    }
+
+    msg["command"] = command + ":failed";
+    switch(error)
+    {
+        case IDevice::FUNCTION_NOT_EXIST:
+            msg["errorstring"] = "Unknown function."; break;
+
+        case IDevice::DEVICE_NOT_AVAILABLE:
+            msg["errorstring"] = "Device is offline.";break;
+
+        case IDevice::PERMISSION_DENIED:
+            msg["errorstring"] = "Permission Denied.";break;
+        case IDevice::PROPERTY_NOT_EXISTS:
+             msg["errorstring"] = "The property does not exist.";break;
+        default:
+             msg["errorstring"] = "Unknown internal error"; break;
+    }
+    socket->sendVariant(msg);
 }
 
 QVariantMap DeviceHandleHandler::getDumpMessage()

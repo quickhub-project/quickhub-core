@@ -23,8 +23,10 @@ public:
 
 private:
     virtual void handleMessage(QVariant message, ISocket* handle) override;
+    void handleError(QString command, IDevice::DeviceError error, ISocket* socket);
     QSharedPointer<DeviceHandle> _deviceHandle;
     QVariantMap getDumpMessage();
+
     QMap<QString, ISocket* > _cbMap;
 
 private slots:
