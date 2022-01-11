@@ -11,7 +11,7 @@
 DeviceHandleHandler::DeviceHandleHandler(QSharedPointer<DeviceHandle> deviceHandle, QObject* parent):IResourceHandler("device", parent),
     _deviceHandle(deviceHandle)
 {
-    connect(deviceHandle.data(), &DeviceHandle::propertyChanged, this, &DeviceHandleHandler::propertyChanged);
+    //connect(deviceHandle.data(), &DeviceHandle::propertyChanged, this, &DeviceHandleHandler::propertyChanged);
     connect(deviceHandle.data(), &DeviceHandle::temporaryChanged, this, &DeviceHandleHandler::temporaryChanged);
     connect(deviceHandle.data(), &DeviceHandle::deviceStateChanged, this, &DeviceHandleHandler::deviceStateChangedSlot);
     connect(deviceHandle.data(), &DeviceHandle::dataReceived, this, &DeviceHandleHandler::dataReceived);
@@ -149,9 +149,8 @@ QVariantMap DeviceHandleHandler::getDumpMessage()
 
 void DeviceHandleHandler::registerProperty(DeviceProperty *property)
 {
-    connect(property, &DeviceProperty::confirmed, this, &DeviceHandleHandler::confirmedChanged);
-    connect(property, &DeviceProperty::setValueChanged, this, &DeviceHandleHandler::setValueChanged);
-    //connect(property, &DeviceProperty::dirtyChanged, this, &DeviceHandleHandler::dirtyChanged);
+    // The queued connection ensures that the property broadcast is sent AFTER the status message (success / failed)
+    connect(property, &DeviceProperty::setValueChanged, this, &DeviceHandleHandler::setValueChanged, Qt::QueuedConnection);
     connect(property, &DeviceProperty::realValueChanged, this, &DeviceHandleHandler::realValueChanged);
     connect(property, &DeviceProperty::metadataChanged, this, &DeviceHandleHandler::metadataChanged);
 }
@@ -231,21 +230,6 @@ void DeviceHandleHandler::metadataChanged(QString name, QString key, QVariant va
     data[key] = value;
     parameters[name] = data;
     msg["parameters"] = parameters;
-
-    deployToAll(msg);
-}
-
-
-void DeviceHandleHandler::confirmedChanged(QString name, qlonglong timestamp, bool accepted)
-{
-    QVariantMap msg;
-    msg["command"] = "device:prop:conf";
-    QVariantMap data;
-    data["confTS"] = timestamp;
-    data["accepted"] = accepted;
-    QVariantMap parameters;
-    parameters[name] = data;
-    msg["parameters"] = parameters;
     deployToAll(msg);
 }
 
@@ -263,13 +247,14 @@ void DeviceHandleHandler::setValueChanged(QString name, QVariant setValue,  bool
 }
 
 
-void DeviceHandleHandler::realValueChanged(QString name, QVariant realValue, bool dirty)
+void DeviceHandleHandler::realValueChanged(QString name, QVariant realValue, bool dirty,  qlonglong timestamp)
 {
     QVariantMap msg;
     msg["command"] = "device:prop:set";
     QVariantMap data;
     data["real"] = realValue;
     data["dirty"] = dirty;
+    data["timestamp"] = timestamp;
     QVariantMap parameters;
     parameters[name] = data;
     msg["parameters"] = parameters;

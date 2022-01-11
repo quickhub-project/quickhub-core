@@ -38,12 +38,9 @@ private slots:
     void temporaryChanged(QString uuid, bool temporary);
 
     void metadataChanged(QString name, QString key, QVariant value);
-    void confirmedChanged(QString name, qlonglong timestamp, bool accepted);
     void setValueChanged(QString name, QVariant setValue, bool dirty);
-    void realValueChanged(QString name, QVariant realValue, bool dirty);
+    void realValueChanged(QString name, QVariant realValue, bool dirty, qlonglong timestamp);
     void socketDisconnectedSlot();
-   // void dirtyChanged(QString name, bool isDirty);
-
     void reinit();
 };
 

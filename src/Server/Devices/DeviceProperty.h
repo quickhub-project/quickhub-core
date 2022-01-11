@@ -59,12 +59,6 @@ public:
     QString     getName() const;
 
     /*!
-        \fn  void setValue(const QVariant &setValue);
-        This function returns the unique name of this property.
-    */
-    void        setValue(const QVariant &setValue);
-
-    /*!
         \fn  void setMetadata(const QVariant &setValue);
         This function allows to store additional parameteres that belongs to a property.
         This could be the unit string, a description string oder the display name of a particular property.
@@ -85,7 +79,6 @@ public:
     */
     bool        isDirty() const;
 
-
     /*!
         \fn qlonglong confirmedTimestamp() const
         This function returns the time when the last value change was
@@ -100,9 +93,16 @@ public:
     */
     QVariantMap toMap() const;
 
+public slots:
+    /*!
+        \fn  void setValue(const QVariant &setValue);
+        This requests a value change from the device.
+    */
+    void setValue(const QVariant &setValue);
+
 signals:
     // This signal is sent when a new value is transmitted by the Device
-    void realValueChanged(QString name, QVariant getRealValue, bool dirty);
+    void realValueChanged(QString name, QVariant getRealValue, bool dirty, qlonglong timestamp);
 
     // This signal is sent when a client has transmitted a new target value to the Device.
     // (Regardless of whether the Device is currently online or not)
@@ -114,9 +114,6 @@ signals:
     // This signal is sent, when the device has received a value change request.
     // Accepted is true, if the previously desired target value was accepted
     void confirmed(QString name, qlonglong timestamp, bool accepted);
-
-    // Will be sent when the timestamp has changed
-    void confirmedTimestampChanged(QString name, qlonglong timestamp);
 
     // Will be sent when the metadata has changed
     void metadataChanged(QString name, QString key, QVariant value);
@@ -133,7 +130,7 @@ private:
     QVariant        _realValue;
     QVariant        _setValue;
     bool            _dirty;
-    qlonglong       _confirmedTimestamp;
+    qlonglong       _timestamp;
     mutable QReadWriteLock  _mutex;
 
 

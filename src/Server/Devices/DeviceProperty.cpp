@@ -19,14 +19,13 @@ DeviceProperty::DeviceProperty(QString name, DeviceHandle *parent, QVariantMap m
         _mutex.lockForWrite();
         _realValue              = metadata["val"];
         _setValue               = metadata["setVal"];
-        _confirmedTimestamp     = metadata["confTS"].toLongLong();
+        _timestamp              = metadata["timestamp"].toLongLong();
         _dirty                  = metadata["dirty"].toBool();
         _metadata               = metadata["metadata"].toMap();
         _mutex.unlock();
         _mutex.lockForRead();
-        Q_EMIT confirmedTimestampChanged(_name,_confirmedTimestamp);
         Q_EMIT setValueChanged(_name, _setValue, _dirty);
-        Q_EMIT realValueChanged(_name, _realValue, _dirty);
+        Q_EMIT realValueChanged(_name, _realValue, _dirty, _timestamp);
         _mutex.unlock();
     }
 }
@@ -50,9 +49,10 @@ void DeviceProperty::setRealValue(const QVariant &realValue,  bool keepDirtyFlag
 
     _mutex.lockForWrite();
     _realValue = realValue;
+    _timestamp = QDateTime::currentMSecsSinceEpoch();
     _mutex.unlock();
     _mutex.lockForRead();
-    Q_EMIT realValueChanged(_name, realValue, _dirty);
+    Q_EMIT realValueChanged(_name, realValue, _dirty, _timestamp);
     _mutex.unlock();
 }
 
@@ -62,18 +62,15 @@ void DeviceProperty::setDirty(bool dirty, bool accepted)
     _dirty = dirty;
     _mutex.unlock();
     _mutex.lockForRead();
-    if(_dirty)
-    {
-        _mutex.unlock();
-        _mutex.lockForWrite();
-        _confirmedTimestamp = QDateTime::currentMSecsSinceEpoch();
-        _mutex.unlock();
-        _mutex.lockForRead();
-        Q_EMIT confirmedTimestampChanged(_name,_confirmedTimestamp);
-        Q_EMIT dirtyChanged(_name, dirty);
-        Q_EMIT confirmed(_name,_confirmedTimestamp, accepted);
-    }
+    Q_EMIT dirtyChanged(_name, dirty);
     _mutex.unlock();
+
+    if(!dirty)
+    {
+        _mutex.lockForRead();
+        Q_EMIT confirmed(_name,_timestamp, accepted);
+        _mutex.unlock();
+    }
 }
 
 DeviceProperty::~DeviceProperty()
@@ -88,7 +85,7 @@ QVariantMap DeviceProperty::toMap() const
     metadata["name"]     = _name;
     metadata["val"]      = _realValue;
     metadata["setVal"]   = _setValue;
-    metadata["confTS"]   = _confirmedTimestamp;
+    metadata["timestamp"]  = _timestamp;
     metadata["dirty"]    = _dirty;
     metadata["metadata"] = _metadata;
     _mutex.unlock();
@@ -137,6 +134,6 @@ bool DeviceProperty::isDirty() const
 qlonglong DeviceProperty::confirmedTimestamp() const
 {
     QReadLocker locker(&_mutex);
-    return _confirmedTimestamp;
+    return _timestamp;
 }
 
