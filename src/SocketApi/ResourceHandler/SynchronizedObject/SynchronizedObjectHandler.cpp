@@ -67,6 +67,7 @@ void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
         parameters["data"] = result.data;
         msg["parameters"] = parameters;
 
+        handleError(command, result.error, handle);
         if(result.error == ObjectResource::NO_ERROR)
         {
             deployToAll(msg, handle);

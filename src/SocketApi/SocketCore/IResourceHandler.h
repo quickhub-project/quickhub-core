@@ -97,6 +97,8 @@ protected:
     void detachHandle(ISocket* handle);
 
 
+    void handleError(QString command, IResource::ResourceError error, ISocket *socket);
+
 private:
     QString                     _resourceType;
     QMap<QString, Message>      _sentMessages;

@@ -31,7 +31,6 @@ private:
     // checks if item at index has correct uuid. if not, the correct index will be searched.
     int getIndexForUUID(QString UUID);
     void handleMessage(QVariant message, ISocket* handle) override;
-    void handleError(QString command, ListResource::ResourceError error, ISocket* socket);
 
 private slots:
     void metadataChanged();

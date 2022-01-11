@@ -259,30 +259,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
     }
 }
 
-void SynchronizedListHandler::handleError(QString command, IResource::ResourceError error, ISocket *socket)
-{
-    QVariantMap answer;
-    if (error >= 0)
-    {
-        answer["command"] = command += ":success";
-        socket->sendVariant(answer);
-        return;
-    }
 
-    answer["command"] = command + ":failed";
-    answer["errorcode"] = error;
-    QString errorString;
-    switch(error)
-    {
-        case IResource::NO_ERROR: errorString = "No error";
-        case IResource::PERMISSION_DENIED: errorString = "Permission Denied."; break;
-        case IResource::UNKNOWN_ITEM :errorString = "Unknown Item"; break;
-        case IResource::INVALID_PARAMETERS :errorString = "Invalid or missing parameters"; break;
-        case IResource::STORAGE_ERROR :errorString = "Storage error"; break;
-        case IResource::UNKNOWN_ERROR : errorString = "Unknown error"; break;
-    }
-    socket->sendVariant(answer);
-}
 
 void SynchronizedListHandler::metadataChanged()
 {
