@@ -151,7 +151,7 @@ void IResourceHandler::handleError(QString command, IResource::ResourceError err
     QString errorString;
     switch(error)
     {
-        case IResource::NO_ERROR: errorString = "No error";
+        case IResource::NO_ERROR: errorString = "No error";break;
         case IResource::PERMISSION_DENIED: errorString = "Permission Denied."; break;
         case IResource::UNKNOWN_ITEM :errorString = "Unknown Item"; break;
         case IResource::INVALID_PARAMETERS :errorString = "Invalid or missing parameters"; break;
