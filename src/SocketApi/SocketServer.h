@@ -18,8 +18,8 @@
 #include "Connection/Connection.h"
 #include <QWebSocketCorsAuthenticator>
 
-
 #define STORAGE_PATH                _serverRootPath+"data/"
+#define CONFIG_DATA                 _serverRootPath+"config/"
 #define USER_DATA                   _serverRootPath+"config/users"
 #define DEVICE_DATA                 _serverRootPath+"devices"
 
