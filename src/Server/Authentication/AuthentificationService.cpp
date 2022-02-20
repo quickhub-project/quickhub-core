@@ -50,30 +50,30 @@ AuthenticationService::AuthenticationService(QObject *parent) : QObject(parent),
 iIdentityPtr AuthenticationService::validateToken(QString token)
 {
     _lock.lockForRead();
-    iIdentityPtr user = _tokenToUserMap.value(token, QSharedPointer<User>());
+    iIdentityPtr identitiy = _tokenToUserMap.value(token, QSharedPointer<User>());
     _lock.unlock();
-    if(!user.isNull())
+    if(!identitiy.isNull())
     {
-        if(user->sessionExpiration() > 0)
+        if(identitiy->sessionExpiration() > 0)
         {
             _lock.lockForRead();
             qint64 tokenExpiration = _tokenToExpiration.value(token, 0);
             _lock.unlock();
             if(tokenExpiration > 0 && tokenExpiration < QDateTime::currentDateTime().toMSecsSinceEpoch())
             {
-                qInfo()<< "Token expired. "<< user->identityID() <<" was forcibly logged out.";
+                qInfo()<< "Token expired. "<< identitiy->identityID() <<" was forcibly logged out.";
                 logout(token);
                 return QSharedPointer<User>();
             }
-            qint64 expiration = QDateTime::currentDateTime().addSecs(user->sessionExpiration()).toMSecsSinceEpoch();
+            qint64 expiration = QDateTime::currentDateTime().addSecs(identitiy->sessionExpiration()).toMSecsSinceEpoch();
             _lock.lockForWrite();
             _tokenToExpiration.insert(token, expiration);
             _lock.unlock();
         }
 
-        user->setLastActivity(QDateTime::currentMSecsSinceEpoch());
+        identitiy->setLastActivity(QDateTime::currentMSecsSinceEpoch());
     }
-    return user;
+    return identitiy;
 }
 
 
