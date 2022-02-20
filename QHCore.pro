@@ -34,12 +34,12 @@ SOURCES += src/Server/Authentication/AuthentificationService.cpp \
     src/Server/Devices/DeviceHandle.cpp \
     src/QHCorePlugin.cpp \
     src/Server/Devices/DeviceProperty.cpp \
+    src/Storage/FileSystemPaths.cpp \
     src/Storage/ListResourceFileSystemStorage.cpp \
     src/Server/Resources/ImageResource/ImageResource.cpp \
     src/Server/Resources/ImageResource/ImageResourceFactory.cpp \
     src/Storage/ImageResourceFilesystemStorage.cpp \
     src/Storage/ObjectResourceFilesystemStorage.cpp \
-    src/Storage/FileSystemStorageManager.cpp \
     src/Server/Logging/Logger.cpp \
     src/Server/Services/ServiceManager.cpp \
     src/Storage/ListResourceTemporaryStorage.cpp \
@@ -71,6 +71,7 @@ HEADERS += \
     src/Server/Devices/DeviceHandle.h \
     src/Connection/ISocket.h \
     src/Connection/IConnectable.h \
+    src/Storage/FileSystemPaths.h \
     src/qhcore_global.h \
     src/QHCorePlugin.h \
     src/Server/Devices/DeviceProperty.h \
@@ -85,7 +86,6 @@ HEADERS += \
     src/Server/Resources/ObjectResource/IObjectResourceStorage.h \
     src/Server/Resources/ObjectResource/IObjectResourceStorageFactory.h \
     src/Storage/ObjectResourceFilesystemStorage.h \
-    src/Storage/FileSystemStorageManager.h \
     src/Server/Logging/Logger.h \
     src/Server/Services/ServiceManager.h \
     src/Server/Services/IService.h \

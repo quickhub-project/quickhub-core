@@ -8,11 +8,11 @@
 #include <QJsonDocument>
 #include <QDebug>
 #include <QDir>
-#include "FileSystemStorageManager.h"
+#include "FileSystemPaths.h"
 
 ObjectResourceFilesystemStorage::ObjectResourceFilesystemStorage(QString qualifiedResourceName, QObject *parent):
     IObjectResourceStorage(parent),
-    _file(FileSystemStorageManager::instance()->getStoragePath()+qualifiedResourceName+".json"),
+    _file(FileSystemPaths::instance()->getStoragePath()+qualifiedResourceName+".json"),
     _qualifiedResourceName(qualifiedResourceName)
 {
     load();

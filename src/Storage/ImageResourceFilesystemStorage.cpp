@@ -8,10 +8,10 @@
 #include <QDir>
 #include <QDebug>
 #include <QJsonDocument>
-#include "FileSystemStorageManager.h"
+#include "FileSystemPaths.h"
 
 ImageResourceFilesystemStorage::ImageResourceFilesystemStorage(QString qualifiedResourceName, QObject *parent) : IImageResourceStorage(parent),
-    _file(FileSystemStorageManager::instance()->getStoragePath()+qualifiedResourceName+"/pictureCollection.json"),
+    _file(FileSystemPaths::instance()->getStoragePath()+qualifiedResourceName+"/pictureCollection.json"),
     _resourceName(qualifiedResourceName)
 {   
 
@@ -23,7 +23,7 @@ bool ImageResourceFilesystemStorage::insertImage(QImage image, QVariantMap metad
     if(!_images.contains(uid))
     {
         save();
-        QString filename = FileSystemStorageManager::instance()->getStoragePath()+ _resourceName+"/"+uid;
+        QString filename = FileSystemPaths::instance()->getStoragePath()+ _resourceName+"/"+uid;
         if(image.save(filename))
             qInfo()<<"File saved!" << filename;
         else
@@ -70,7 +70,7 @@ QVariantMap ImageResourceFilesystemStorage::getAllMetadata()
 
 QImage ImageResourceFilesystemStorage::getImage(QString uid)
 {
-    QString path = FileSystemStorageManager::instance()->getStoragePath()+_resourceName+"/"+uid;
+    QString path = FileSystemPaths::instance()->getStoragePath()+_resourceName+"/"+uid;
     if(QFile::exists(path))
         return QImage(path);
 

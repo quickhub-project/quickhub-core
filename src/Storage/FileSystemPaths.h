@@ -4,24 +4,31 @@
  * It is part of the QuickHub framework - www.quickhub.org
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
-#ifndef FILESYSTEMSTORAGEMANAGER_H
-#define FILESYSTEMSTORAGEMANAGER_H
+#ifndef FILESYSTEMPATHS_H
+#define FILESYSTEMPATHS_H
 
 #include <QObject>
 
-class FileSystemStorageManager : public QObject
+class FileSystemPaths : public QObject
 {
     Q_OBJECT
 
 public:
-    FileSystemStorageManager(QObject* parent = nullptr);
-    static FileSystemStorageManager* instance();
-    void init(QString path);
+    FileSystemPaths(QObject* parent = nullptr);
+    static FileSystemPaths* instance();
+
+    void setStoragePath(const QString &newStoragePath);
     QString getStoragePath();
+
+    void setConfigPath(const QString &newConfigPath);
+    const QString &getConfigPath() const;
+
+
 
 private:
     QString                             _storagePath;
+    QString                             _configPath;
 
 };
 
-#endif // FILESYSTEMSTORAGEMANAGER_H
+#endif // FILESYSTEMPATHS_H

@@ -25,7 +25,7 @@
 #include "Server/Resources/ListResource/ListResourceFactory.h"
 #include "Server/Resources/ObjectResource/ObjectResourceFactory.h"
 #include "Server/Resources/ImageResource/ImageResourceFactory.h"
-#include "Storage/FileSystemStorageManager.h"
+#include "Storage/FileSystemPaths.h"
 #include "Devices/SocketDeviceHandler.h"
 #include "DataHandler/Lists/ListHandlerFactory.h"
 #include "Devices/DeviceHandleHandlerFactory.h"
@@ -72,9 +72,10 @@ void SocketServer::start(QString storageDirectory, quint16 port)
 
 void SocketServer::initServices()
 {
-    DeviceManager::instance()->init(DEVICE_DATA);
-    FileSystemStorageManager::instance()->init(STORAGE_PATH);
+    FileSystemPaths::instance()->setStoragePath(STORAGE_PATH);
+    FileSystemPaths::instance()->setConfigPath(CONFIG_DATA);
 
+    DeviceManager::instance()->init(DEVICE_DATA);
     DefaultAuthenticator::instance()->init(USER_DATA);
     AuthenticationService::instance()->registerAuthenticator(DefaultAuthenticator::instance());
 

@@ -8,10 +8,10 @@
 #include <QDir>
 #include <QJsonDocument>
 #include <QDebug>
-#include "FileSystemStorageManager.h"
+#include "FileSystemPaths.h"
 ListResourceFileSystemStorage::ListResourceFileSystemStorage(QString qualifiedResourceName, QObject *parent) :
     IListResourceStorage(parent),
-    _file(FileSystemStorageManager::instance()->getStoragePath()+qualifiedResourceName+".json"),
+    _file(FileSystemPaths::instance()->getStoragePath()+qualifiedResourceName+".json"),
     _qualifiedResourceName(qualifiedResourceName)
 {
     load();
