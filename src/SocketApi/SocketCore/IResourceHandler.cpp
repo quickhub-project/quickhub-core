@@ -136,7 +136,7 @@ void IResourceHandler::deployToAll(QVariantMap msg, ISocket *sender)
     }
 }
 
-void IResourceHandler::handleError(QString command, IResource::ResourceError error, ISocket *socket)
+void IResourceHandler::handleError(QString command, IResource::ResourceError error, ISocket *socket, QVariantMap parameters)
 {
     QVariantMap answer;
     if (error >= 0)
@@ -158,5 +158,10 @@ void IResourceHandler::handleError(QString command, IResource::ResourceError err
         case IResource::STORAGE_ERROR :errorString = "Storage error"; break;
         case IResource::UNKNOWN_ERROR : errorString = "Unknown error"; break;
     }
+
+    answer["errorstring"] = errorString;
+    if(!parameters.isEmpty())
+        answer["parameters"] = parameters;
+
     socket->sendVariant(answer);
 }

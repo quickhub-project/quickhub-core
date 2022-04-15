@@ -34,7 +34,6 @@ bool SynchronizedObjectHandler::dynamicContent() const
     return _resource->dynamicContent();
 }
 
-
 void SynchronizedObjectHandler::propertyChanged(QString property, QVariant data, iIdentityPtr user)
 {
     Q_UNUSED(user)
@@ -67,7 +66,7 @@ void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
         parameters["data"] = result.data;
         msg["parameters"] = parameters;
 
-        handleError(command, result.error, handle);
+        handleError(command, result.error, handle, parameters);
         if(result.error == ObjectResource::NO_ERROR)
         {
             deployToAll(msg, handle);

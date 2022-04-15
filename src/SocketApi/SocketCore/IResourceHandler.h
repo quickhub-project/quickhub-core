@@ -97,7 +97,7 @@ protected:
     void detachHandle(ISocket* handle);
 
 
-    void handleError(QString command, IResource::ResourceError error, ISocket *socket);
+    void handleError(QString command, IResource::ResourceError error, ISocket *socket, QVariantMap parameters = QVariantMap());
 
 private:
     QString                     _resourceType;
