@@ -49,13 +49,13 @@ void SynchronizedObjectHandler::propertyChanged(QString property, QVariant data,
 
 void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
 {
-
     QVariantMap msg     = message.toMap();
 
     QString     command     = msg["command"].toString();
     QString     token       = msg["token"].toString();
     QVariantMap parameters  = msg["parameters"].toMap();
     QVariant    data        = parameters["data"];
+    msg.remove("token");
 
     if(command == "object:property:set")
     {
