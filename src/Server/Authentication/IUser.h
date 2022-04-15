@@ -118,7 +118,7 @@ public:
         \fn QString IUser::setEMail(const QString &eMail) = 0;
         This function is called when a user changes its eMail adress. Make sure to persist the desired eMail Adress.
     */
-    virtual void            setEMail(const QString &eMail) = 0;
+    virtual bool            setEMail(const QString &eMail) = 0;
 
     /*!
         \fn QString IUser::getEMail() const = 0;
