@@ -98,10 +98,11 @@ QString User::getEMail() const
     return _eMail;
 }
 
-void User::setEMail(const QString &eMail)
+bool User::setEMail(const QString &eMail)
 {
     _eMail = eMail;
      Q_EMIT dataChanged();
+    return true;
 }
 
 bool User::isAuthorizedTo(QString permission)

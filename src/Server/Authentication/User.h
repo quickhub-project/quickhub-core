@@ -35,7 +35,7 @@ public:
 
     bool checkPassword(QString password) override;
     void setUserData(const QVariantMap &userData);
-    void setEMail(const QString &getEMail) override;
+    bool setEMail(const QString &getEMail) override;
     bool isAuthorizedTo(QString permission) override;
     QVariantMap toVariant() const ;
     UserData userData() const override;
