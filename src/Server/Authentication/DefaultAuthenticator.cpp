@@ -107,7 +107,8 @@ userPtr DefaultAuthenticator::addUser(userPtr user, QString token, Authenticatio
     }
 
     QString userID = user->identityID();
-    if(_idToUserMap.contains(userID))
+
+    if (!AuthenticationService::instance()->getUserForUserID(userID).isNull())
     {
         if(error)
             *error = AuthenticationService::UserAlreadyExists;
