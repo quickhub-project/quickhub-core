@@ -16,7 +16,6 @@ Q_GLOBAL_STATIC(ResourceManager, resourceManager);
 
 ResourceManager *ResourceManager::instance()
 {
-
     return resourceManager;
 }
 
@@ -60,7 +59,7 @@ resourcePtr ResourceManager::getOrCreateResource(QString type, QString descripto
 
     // TODO: Check if user is allowed to access resources - > groups?
 
-    IResourceFactory* factory = getResourceFactory(type, descriptor);//_resourceFactorys.value(type.toLower(), nullptr);
+    IResourceFactory* factory = getResourceFactory(type, descriptor);
     if(!factory)
     {
         qWarning()<<Q_FUNC_INFO <<"- Unknown resource type: "<<type;
@@ -119,7 +118,6 @@ IResourceFactory *ResourceManager::getResourceFactory(QString type, QString desc
        return a->getDescriptorPrefix().length() > b->getDescriptorPrefix().length();
    });
    QListIterator<IResourceFactory*> it(factories);
-
 
    if(factories.count() == 1)
        return factories.first();

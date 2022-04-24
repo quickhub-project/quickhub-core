@@ -34,6 +34,11 @@ bool SynchronizedObjectHandler::dynamicContent() const
     return _resource->dynamicContent();
 }
 
+bool SynchronizedObjectHandler::isPermitted(QString token) const
+{
+    return _resource->isPermittedToRead(token);
+}
+
 void SynchronizedObjectHandler::propertyChanged(QString property, QVariant data, iIdentityPtr user)
 {
     Q_UNUSED(user)

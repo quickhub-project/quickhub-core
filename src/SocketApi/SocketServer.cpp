@@ -30,6 +30,7 @@
 #include "DataHandler/Lists/ListHandlerFactory.h"
 #include "Devices/DeviceHandleHandlerFactory.h"
 #include "Services/ServiceRequestHandler.h"
+#include "Server/Settings/SettingsManager.h"
 
 Q_GLOBAL_STATIC(SocketServer, socketServer);
 
@@ -86,11 +87,11 @@ void SocketServer::initServices()
     resourceManager->addResourceFactory(new ListResourceFactory(this));
     resourceManager->addResourceFactory(new ObjectResourceFactory(this));
     resourceManager->addResourceFactory(new ImageResourceFactory(this));
+    resourceManager->addResourceFactory(SettingsManager::instance());
 
     _handlers << new SessionHandler(this);
     _handlers << new SocketDeviceHandler(this);
     _handlers << new ServiceRequestHandler(this);
-
 
     SocketResourceManager* manager = new SocketResourceManager(this);
     manager->registerFactory(new SynchronizedListHandlerFactory(this));

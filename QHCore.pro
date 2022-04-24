@@ -34,6 +34,8 @@ SOURCES += src/Server/Authentication/AuthentificationService.cpp \
     src/Server/Devices/DeviceHandle.cpp \
     src/QHCorePlugin.cpp \
     src/Server/Devices/DeviceProperty.cpp \
+    src/Server/Settings/SettingsManager.cpp \
+    src/Server/Settings/SettingsResource.cpp \
     src/Storage/FileSystemPaths.cpp \
     src/Storage/ListResourceFileSystemStorage.cpp \
     src/Server/Resources/ImageResource/ImageResource.cpp \
@@ -71,6 +73,8 @@ HEADERS += \
     src/Server/Devices/DeviceHandle.h \
     src/Connection/ISocket.h \
     src/Connection/IConnectable.h \
+    src/Server/Settings/SettingsManager.h \
+    src/Server/Settings/SettingsResource.h \
     src/Storage/FileSystemPaths.h \
     src/qhcore_global.h \
     src/QHCorePlugin.h \

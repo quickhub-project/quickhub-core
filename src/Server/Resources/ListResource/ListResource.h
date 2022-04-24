@@ -56,7 +56,7 @@ public:
     qint64                      lastAccess() const override;
 
     /*!
-        \fn qint64 ListResource::getResourceType() const override
+        \fn QString ListResource::getResourceType() const override
         Returns the resource type as string.
     */
     QString const               getResourceType() const override;
@@ -166,7 +166,7 @@ public:
     /*!
       \fn bool ListResource::setFilter(QVariantMap query)
       Applies a filter to the list. This function is not implemented by this base class. It can be overwritten to provide
-      filtering query/features. The idea is to make it possible to query data with specific
+      filtering query/features. The idea is to make it possible to query data that meet certain properties
 
       \note Don't forget to call IRresource::setDynamicContent(true) in the constructor of your derived list class when you
       provide filtering.

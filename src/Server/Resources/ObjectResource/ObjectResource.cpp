@@ -62,11 +62,23 @@ QVariantMap ObjectResource::getMetaData() const
     return _storage->getMetadata().toMap();
 }
 
+bool ObjectResource::isPermittedToRead(QString token) const
+{
+    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
+    return !user.isNull();
+}
+
+bool ObjectResource::isPermittedToWrite(QString token) const
+{
+    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
+    return !user.isNull();
+}
+
 ObjectResource::ModificationResult ObjectResource::setProperty(QString name, const QVariant &value, QString token)
 {
     ModificationResult result;
     iIdentityPtr  user = AuthenticationService::instance()->validateToken(token);
-    if(user.isNull())
+    if(!isPermittedToWrite(token))
     {
         result.error = PERMISSION_DENIED;
         return result;

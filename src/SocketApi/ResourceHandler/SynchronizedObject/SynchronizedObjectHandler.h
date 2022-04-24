@@ -22,6 +22,7 @@ public:
     ~SynchronizedObjectHandler() override;
     void initHandle(ISocket* handle) override;
     bool dynamicContent() const override;
+    bool isPermitted(QString token) const override;
 
 private:
     QSharedPointer<ObjectResource> _resource;

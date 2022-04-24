@@ -91,12 +91,9 @@ public:
     //TODO: refactor this weird constrution
     virtual QString generateQualifiedResourceName(QString descriptor, iIdentityPtr  user) const
     {
-        if(user.isNull())
-            return "";
-
         descriptor = descriptor.replace(".","/");
         QStringList tokens = descriptor.split("/",  QString::SkipEmptyParts);
-        if(tokens[0] == "home")
+        if(tokens[0] == "home" && !user.isNull())
         {
             tokens.insert(1, user->identityID());
         }
