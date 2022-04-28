@@ -27,6 +27,15 @@ public:
         Return a nullpointer when the requested user doesn`t exists.
     */
     virtual iUserPtr getUser(QString userID) = 0;
+
+    /*!
+        Checks if the userID is valid. Here you should especially check if
+        the userID already exists.
+
+        \note In order to prevent the same usernames with
+        different capitalization, the verification case should be insensitive.
+    */
+    virtual bool isUnusedUserID(QString userID) = 0;
 };
 
 #endif // IAUTHENTICATOR_H

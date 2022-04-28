@@ -23,7 +23,8 @@ class DefaultAuthenticator : public IAuthenticator
 public:    
     void init(QString userDataPath);
 
-    iUserPtr getUser(QString userID) ;
+    iUserPtr getUser(QString userID) override;
+    virtual bool isUnusedUserID(QString userID) override;
 
     DefaultAuthenticator(QObject* parent = nullptr);
 
@@ -76,6 +77,7 @@ public:
     userPtr addUser(userPtr user, QString token, AuthenticationService::ErrorCode *error);
 
 private:
+    iUserPtr getUser(QString userID, bool caseSensitive);
     void deleteUser(userPtr user);
     void addUser(userPtr user);
     bool _everybodyCanAddUsers = false;

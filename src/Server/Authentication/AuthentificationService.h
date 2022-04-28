@@ -125,8 +125,19 @@ public:
     */
     bool logout(QString token);
 
+    /*!
+        \fn iUserPtr getUserForUserID(QString userID) const
+        Searches all registered authentication objects for a user with the given userID
+    */
     iUserPtr getUserForUserID(QString userID) const;
 
+    /*!
+        \fn bool alreadyExists(QString userID) const
+        Checks if a given username is already taken. Depending on the implementation of
+        the authenticator, the search may be case insensitive. This is to prevent two users
+        from having the same username with different capitalization.
+    */
+    bool alreadyExists(QString userID) const;
 
 signals:
     void sessionClosed(QString userID, QString token);

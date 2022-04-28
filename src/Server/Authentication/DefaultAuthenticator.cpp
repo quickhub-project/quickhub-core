@@ -9,10 +9,37 @@
 
 Q_GLOBAL_STATIC(DefaultAuthenticator, defaultAuthenticator);
 
+
 iUserPtr DefaultAuthenticator::getUser(QString userID)
 {
+    return getUser(userID, true);
+}
+
+bool DefaultAuthenticator::isUnusedUserID(QString userID)
+{
+    return getUser(userID, false).isNull();
+}
+
+iUserPtr DefaultAuthenticator::getUser(QString userID, bool caseSensitive)
+{
     QReadLocker locker(&_lock);
-    return qSharedPointerCast<IUser>(_idToUserMap.value(userID, userPtr()));
+    if(caseSensitive)
+    {
+        return qSharedPointerCast<IUser>(_idToUserMap.value(userID, userPtr()));
+    }
+    else
+    {
+        QHashIterator<QString, userPtr> it(_idToUserMap);
+        while(it.hasNext())
+        {
+            it.next();
+           if(it.key().toLower() == userID.toLower())
+           {
+               return qSharedPointerCast<IUser>(it.value());
+           }
+        }
+    }
+    return iUserPtr();
 }
 
 DefaultAuthenticator::DefaultAuthenticator(QObject* parent) : IAuthenticator(parent)
@@ -108,7 +135,7 @@ userPtr DefaultAuthenticator::addUser(userPtr user, QString token, Authenticatio
 
     QString userID = user->identityID();
 
-    if (!AuthenticationService::instance()->getUserForUserID(userID).isNull())
+    if (AuthenticationService::instance()->alreadyExists(userID))
     {
         if(error)
             *error = AuthenticationService::UserAlreadyExists;

@@ -218,6 +218,22 @@ iUserPtr AuthenticationService::getUserForUserID(QString userID) const
     return userObj;
 }
 
+bool AuthenticationService::alreadyExists(QString userID) const
+{
+    _lock.lockForRead();
+    QListIterator<IAuthenticator*> it(_authenticators);
+    _lock.unlock();
+    iUserPtr userObj;
+
+    while(it.hasNext())
+    {
+        if(!it.next()->isUnusedUserID(userID))
+            return true;
+    }
+
+    return false;
+}
+
 void AuthenticationService::checkTimeouts()
 {
     QHashIterator<QString, qint64> it(_tokenToExpiration);
