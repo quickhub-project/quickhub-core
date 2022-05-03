@@ -28,7 +28,8 @@ public:
         UNKNOWN_ITEM = -2,
         INVALID_PARAMETERS = -3,
         STORAGE_ERROR = -4,
-        UNKNOWN_ERROR = -5
+        UNKNOWN_ERROR = -5,
+        NOT_SUPPORTED = -6
     };
 
     Q_ENUM (ResourceError)
