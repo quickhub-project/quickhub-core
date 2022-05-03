@@ -104,6 +104,7 @@ private:
 
 signals:
     void                        resourceDestroyed(QString descriptor);
+    void                        sendEvent(QVariantMap data);
 };
 
 #endif // IRESOURCE_H

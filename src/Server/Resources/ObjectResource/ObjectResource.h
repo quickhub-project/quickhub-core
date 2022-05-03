@@ -104,7 +104,6 @@ protected:
 signals:
     void propertyChanged(QString property, QVariant data, iIdentityPtr  user);
 
-
 public slots:
 };
 

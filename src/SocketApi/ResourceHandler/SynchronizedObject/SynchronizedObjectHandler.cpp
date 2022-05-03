@@ -12,6 +12,7 @@ SynchronizedObjectHandler::SynchronizedObjectHandler(QSharedPointer<ObjectResour
     _resource(resource)
 {
     connect(_resource.data(), &ObjectResource::propertyChanged, this, &SynchronizedObjectHandler::propertyChanged);
+    connect(_resource.data(), &ObjectResource::sendEvent, this, &SynchronizedObjectHandler::sendEvent);
 }
 
 SynchronizedObjectHandler::~SynchronizedObjectHandler()
@@ -84,4 +85,14 @@ void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
         if(_resource->dynamicContent())
             _resource->setFilter(data.toMap());
     }
+}
+
+void SynchronizedObjectHandler::sendEvent(QVariantMap data)
+{
+    QVariantMap msg;
+    msg["command"] = "object:property:event";
+    QVariantMap parameters;
+    parameters["data"] =  data;
+    msg["parameters"] = parameters;
+    deployToAll(msg);
 }

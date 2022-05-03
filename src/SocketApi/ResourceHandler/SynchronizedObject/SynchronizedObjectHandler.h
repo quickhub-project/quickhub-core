@@ -29,11 +29,13 @@ private:
     QList<ISocket*> _handles;
 
 signals:
+
 public slots:
 
 private slots:
     void propertyChanged(QString property, QVariant data, iIdentityPtr user);
     void handleMessage(QVariant message, ISocket* handle) override;
+    void sendEvent(QVariantMap data);
 };
 
 #endif // SOCKETOBJECTHANDLER_H
