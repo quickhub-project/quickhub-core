@@ -37,8 +37,8 @@ class DeviceService : public IService
 
 public:
     DeviceService(QObject* parent = nullptr);
-    virtual QString         getServiceName() override;
-    virtual QStringList     getServiceCalls() override;
+    virtual QString         getServiceName() const override;
+    virtual QStringList     getServiceCalls() const override;
     virtual bool            call(QString call, QString token, QString cbID, QVariant argument = QVariant()) override;
     QVariantMap             syncCalls(QString call, QString token, QVariant argument);
 

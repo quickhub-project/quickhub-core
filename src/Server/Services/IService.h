@@ -38,12 +38,12 @@ public:
     /*!
       Return the name of your service. This is the string with which the service can be addressed from the client.
     */
-    virtual QString         getServiceName() = 0;
+    virtual QString         getServiceName() const = 0;
 
     /*!
         Return a string list that contains all supported calls.
     */
-    virtual QStringList     getServiceCalls() = 0;
+    virtual QStringList     getServiceCalls() const = 0;
 
     /*!
         Here is where all the magic happens. Since all service call calls are processed completely asynchronously,

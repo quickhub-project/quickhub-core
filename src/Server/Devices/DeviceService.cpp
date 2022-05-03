@@ -15,12 +15,12 @@ DeviceService::DeviceService(QObject* parent) : IService(parent),
     connect(_updateLogic, &DeviceUpdateLogic::sendResult, this, &DeviceService::response);
 }
 
-QString DeviceService::getServiceName()
+QString DeviceService::getServiceName() const
 {
     return "devices";
 }
 
-QStringList DeviceService::getServiceCalls()
+QStringList DeviceService::getServiceCalls() const
 {
     QStringList calls;
     calls << "hookWithShortID" << "unhookWithShortID" << "checkForUpdates" << "startUpdate";
