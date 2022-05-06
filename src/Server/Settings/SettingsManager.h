@@ -23,7 +23,7 @@ public:
     QVariantMap getSettings(QString topic, QVariantMap init);
 
 private:
-    QSharedPointer<IResource> getOrCreateSettings(QString topic);
+    QSharedPointer<IResource> getOrCreateSettings(QString topic, bool external);
     resourcePtr createResource(QString token, QString descriptor, QObject *parent) override;
     QMap<QString, QWeakPointer<IResource>> _settings;
     QMutex _mutex;

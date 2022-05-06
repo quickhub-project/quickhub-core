@@ -12,7 +12,11 @@ public:
     explicit SettingsResource(IObjectResourceStorage* storage, QObject *parent = nullptr);
     virtual bool isPermittedToRead(QString token) const override;
     virtual bool isPermittedToWrite(QString token) const override;
-    void setProperty(QString name, const QVariant &value);
+    void setProperty(QString name, const QVariant &value) ;
+    void setPubliclyReadable(bool readable);
+
+private:
+    bool _publiblyReadable = false;
 
 signals:
 

@@ -90,7 +90,7 @@ void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
 void SynchronizedObjectHandler::sendEvent(QVariantMap data)
 {
     QVariantMap msg;
-    msg["command"] = "object:property:event";
+    msg["command"] = "object:event";
     QVariantMap parameters;
     parameters["data"] =  data;
     msg["parameters"] = parameters;

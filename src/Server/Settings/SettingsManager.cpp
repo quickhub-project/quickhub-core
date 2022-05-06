@@ -25,7 +25,7 @@ QString SettingsManager::getDescriptorPrefix() const
     return "settings/";
 }
 
-QSharedPointer<IResource> SettingsManager::getOrCreateSettings(QString resourceName)
+QSharedPointer<IResource> SettingsManager::getOrCreateSettings(QString resourceName, bool external)
 {
     QMutexLocker locker(&_mutex);
     if(_settings.contains(resourceName)){
@@ -34,7 +34,9 @@ QSharedPointer<IResource> SettingsManager::getOrCreateSettings(QString resourceN
             return resource.toStrongRef();
     }
     qInfo()<<"Create SettingsResource with FS Resource Handler  "<<resourceName;
-    auto resource = resourcePtr(new SettingsResource(new ObjectResourceFilesystemStorage(resourceName, nullptr)));
+    auto settings = new SettingsResource(new ObjectResourceFilesystemStorage(resourceName, nullptr));
+    settings->setPubliclyReadable(external);
+    auto resource = resourcePtr(settings);
     _settings.insert(resourceName, resource.toWeakRef());
     connect(resource.data(), &IResource::resourceDestroyed, this, [=](QString descriptor)
     {
@@ -52,7 +54,7 @@ SettingsManager *SettingsManager::instance()
 QVariant SettingsManager::getSetting(QString topic, QString key, QVariant init)
 {
     QString resourceID = getResourceID(getDescriptorPrefix()+topic);
-    auto settings = qSharedPointerCast<SettingsResource>(getOrCreateSettings(resourceID));
+    auto settings = qSharedPointerCast<SettingsResource>(getOrCreateSettings(resourceID, false));
     QVariantMap data = settings->getObjectData();
     if(!data.contains(key))
     {
@@ -66,7 +68,7 @@ QVariant SettingsManager::getSetting(QString topic, QString key, QVariant init)
 QVariantMap SettingsManager::getSettings(QString topic, QVariantMap init)
 {
     QString resourceID = getResourceID(getDescriptorPrefix()+topic);
-    auto settings = qSharedPointerCast<SettingsResource>(getOrCreateSettings(resourceID));
+    auto settings = qSharedPointerCast<SettingsResource>(getOrCreateSettings(resourceID, false));
     if(settings->getObjectData().isEmpty())
     {
         QMapIterator<QString, QVariant> it(init);
@@ -93,5 +95,6 @@ resourcePtr SettingsManager::createResource(QString token, QString descriptor, Q
         return resourcePtr();
 
     QString resourceName = getResourceID(descriptor);
-    return getOrCreateSettings(resourceName);
+    auto settings = getOrCreateSettings(resourceName, resourceName.toLower().startsWith("settings/ext/"));
+    return settings;
 }

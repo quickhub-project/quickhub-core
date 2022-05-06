@@ -9,9 +9,8 @@ SettingsResource::SettingsResource(IObjectResourceStorage* storage, QObject *par
 
 bool SettingsResource::isPermittedToRead(QString token) const
 {
-    auto isPublic = this->getObjectData().value("isPubliclyReadable").toMap().value("data", false).toBool();
     iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
-    return !user.isNull() && (user->isAuthorizedTo(IS_ADMIN) || isPublic);
+    return !user.isNull() && (user->isAuthorizedTo(IS_ADMIN) || _publiblyReadable);
 }
 
 
@@ -22,9 +21,14 @@ void  SettingsResource::setProperty(QString name, const QVariant &value)
     data["lastupdate"] = QDateTime::currentMSecsSinceEpoch();
     _mutex.lockForWrite();
     _lastAccess = QDateTime::currentMSecsSinceEpoch();
-    _storage->insertProperty(name, value);
+    _storage->insertProperty(name, data);
     Q_EMIT propertyChanged(name, value, nullptr);
     _mutex.unlock();
+}
+
+void SettingsResource::setPubliclyReadable(bool readable)
+{
+    _publiblyReadable = readable;
 }
 
 bool SettingsResource::isPermittedToWrite(QString token) const
