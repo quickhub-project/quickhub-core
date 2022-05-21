@@ -43,7 +43,7 @@ public:
 
 protected:
     explicit User(QObject *parent = nullptr);
-    bool setPassword(QString password) override;
+    bool setPassword(QString password, bool isTemporary = false) override;
     explicit User(QVariantMap variant, QObject* parent = nullptr);
     void setUserID(const QString &identityID);
     void setPassHash(const QString &passHash);

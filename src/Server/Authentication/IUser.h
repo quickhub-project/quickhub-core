@@ -105,8 +105,10 @@ public:
     /*!
         \fn QSet<QString> IUser::setPassword(QString password) const
         Store the new password (no, not the password - use hashes!). Return false when something went wrong.
+        \param new password
+        \param if set to true, the new password will
     */
-    virtual bool            setPassword(QString password) = 0;
+    virtual bool            setPassword(QString password,  bool isTemporary = false) = 0;
 
     /*!
         \fn QString IUser::userLogin() const = 0;

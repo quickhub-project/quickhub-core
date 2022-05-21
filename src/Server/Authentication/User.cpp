@@ -183,8 +183,9 @@ bool User::checkPassword(QString password)
     return generateHash(password) == _passHash;
 }
 
-bool User::setPassword(QString password)
+bool User::setPassword(QString password, bool isTemporary)
 {
+    Q_UNUSED (isTemporary)
     setPassHash(generateHash(password));
     return true;
 }
