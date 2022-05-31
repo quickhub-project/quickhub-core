@@ -116,10 +116,10 @@ QVariant DeviceHandleListWrapper::toVariant(deviceHandlePtr handle)
     QStringList deviceMappings = DeviceManager::instance()->getMappings().keys(handle->uuid());
     data["mappings"] = deviceMappings;
     data["online"] = handle->getDeviceState() == IDevice::ONLINE;
-   // data["functions"] = handle->getFunctions();
     data["uuid"] = handle->uuid();
     data["type"] = handle->type();
     data["description"] = handle->getDescription();
+    data["shortID"] = handle->shortUid();
     return data;
 }
 
