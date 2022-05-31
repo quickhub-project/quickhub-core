@@ -37,7 +37,15 @@ QVariantMap DeviceListWrapper::toMap(QSharedPointer<IDevice> device) const
     deviceData["type"] = device->type();
     deviceData["uuid"] = device->uuid();
     deviceData["shortID"] = device->shortId();
-
+    QVariantMap permVariantMap;
+    auto permMap = device->getRequestedPermissions();
+    QMapIterator<QString, bool> it(permMap);
+    while(it.hasNext())
+    {
+        it.next();
+        permVariantMap.insert(it.key(), it.value());
+    }
+    deviceData["permissions"] = permVariantMap;
     return deviceData;
 }
 
