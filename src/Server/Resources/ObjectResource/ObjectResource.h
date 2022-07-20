@@ -76,7 +76,8 @@ public:
         \fn bool ObjectResource::isPermittedToWrite(QString token) const
         Overwrite this function and return false when the appropriate user is not permitted to modify / write the data
         in this resource.
-        \note This function is currently not yet used. It is not checked at any point and has no effect at the moment!
+        \note This function is checked within ObjectResource::setProperty. If you overwrite this function with
+        your own implementation, there is no internal check anymore.
     */
     virtual bool               isPermittedToWrite(QString token) const;
 
