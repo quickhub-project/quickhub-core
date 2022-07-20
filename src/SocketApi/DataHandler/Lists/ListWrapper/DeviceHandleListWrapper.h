@@ -26,7 +26,6 @@ private slots:
     void handleRemoved(QString uuid);
     void deviceStateChangedSlot(QString uuid, IDevice::DeviceState state);
     void deviceDescriptionChangedSlot(QString uuid, QString description);
-    void propertyChangedSlot(QString uuid, QString property, QVariant value);
     void newMapping(QString uuid, QString mapping);
 
 private:

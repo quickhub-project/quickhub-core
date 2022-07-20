@@ -105,24 +105,6 @@ void DeviceListWrapper::handleMessage(QVariant msg, ISocket *handle)
     }
 }
 
-void DeviceListWrapper::devicePropertyChanged(QString uuid, QString property, QVariant value)
-{
-    if(!_list.contains(uuid))
-        return;
-
-    int idx = getIndex(uuid);
-    if(idx < 0)
-        return;
-
-    QVariantMap item = _list[idx].toMap();
-    QVariantMap properties = item["properties"].toMap();
-    properties[property] = value;
-    item["properties"] = properties;
-    _list.replace(idx, item);
-    Q_EMIT propertyChanged("properties", properties,idx);
-}
-
-
 void DeviceListWrapper::newDevice(QString uuid)
 {
     if(addDevice(uuid))

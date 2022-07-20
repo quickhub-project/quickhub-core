@@ -65,20 +65,6 @@ void DeviceHandleListWrapper::deviceDescriptionChangedSlot(QString uuid, QString
     Q_EMIT IList::propertyChanged("description", description, idx);
 }
 
-void DeviceHandleListWrapper::propertyChangedSlot(QString uuid, QString property, QVariant value)
-{
-    if(!_devices.contains(uuid))
-        return;
-
-    QVariantMap item = _devices[uuid].toMap();
-    QVariantMap properties = item["properties"].toMap();
-    properties[property] = value;
-    item["properties"] = properties;
-    _devices.insert(uuid, item);
-    int idx = getIndex(uuid);
-    Q_EMIT propertyChanged("properties", properties, idx);
-}
-
 void DeviceHandleListWrapper::newMapping(QString uuid, QString mapping)
 {
     Q_UNUSED(mapping)
@@ -103,8 +89,6 @@ void DeviceHandleListWrapper::addHandle(deviceHandlePtr handle)
     _devices.insert(uuid, handleData);
     int idx = getIndex(uuid);
 
-
-    connect(handle.data(), &DeviceHandle::propertyChanged, this, &DeviceHandleListWrapper::propertyChangedSlot);
     connect(handle.data(), &DeviceHandle::deviceStateChanged, this, &DeviceHandleListWrapper::deviceStateChangedSlot);
     connect(handle.data(), &DeviceHandle::descriptionChanged, this, &DeviceHandleListWrapper::deviceDescriptionChangedSlot);
     Q_EMIT itemAdded(handleData, idx);

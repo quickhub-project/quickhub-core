@@ -28,7 +28,6 @@ private:
     void handleMessage(QVariant msg, ISocket *handle) override;
 
 private slots:
-    void devicePropertyChanged(QString uuid, QString property, QVariant value);
     void newDevice(QString uuid);
     void deviceRemoved(QString uuid);
     void newMapping(QString uuid, QString mapping);
