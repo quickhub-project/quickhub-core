@@ -26,7 +26,9 @@ bool ObjectResourceFilesystemStorage::insertProperty(QString name, QVariant valu
 
 bool ObjectResourceFilesystemStorage::sync()
 {
-    return save();
+    if(!_propertyData.isEmpty() || !_metadata.isValid())
+        return save();
+    return true;
 }
 
 bool ObjectResourceFilesystemStorage::setMetadata(QVariant metadata)

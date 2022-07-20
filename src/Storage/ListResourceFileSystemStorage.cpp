@@ -73,7 +73,9 @@ bool ListResourceFileSystemStorage::setProperty(QString property, QVariant data,
 
 bool ListResourceFileSystemStorage::sync()
 {
-    return save();
+    if(!_listData.isEmpty() || !_metadata.isEmpty())
+        return save();
+    return true;
 }
 
 bool ListResourceFileSystemStorage::setMetadata(QVariant metadata)
