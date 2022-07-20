@@ -40,6 +40,9 @@ void DeviceHandleHandler::handleMessage(QVariant message, ISocket *handle)
     QString     token       = msg["token"].toString();
     QVariantMap parameters  = msg["parameters"].toMap();
 
+    if(token.isEmpty())
+        return;
+
     if(command == "device:call")
     {
         QString functionName = parameters["funcname"].toString();
