@@ -383,5 +383,5 @@ void SynchronizedListHandler::listResetted()
 
 bool SynchronizedListHandler::isPermitted(QString token) const
 {
-    return  _resource->isPermittedToRead(token);
+    return  _resource->isPermittedToRead(AuthenticationService::instance()->validateToken(token));
 }

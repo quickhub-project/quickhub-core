@@ -81,7 +81,7 @@ ListResource::ModificationResult ListResource::appendItem(QVariant data, QString
 {
     iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
 
-    if(identity.isNull() || !_allowUserAccess)
+    if(!isPermittedToWrite(identity) || !_allowUserAccess)
     {
         ModificationResult result;
         result.error = PERMISSION_DENIED;
@@ -114,15 +114,15 @@ IResource::ModificationResult ListResource::appendItem(QVariant data, iIdentityP
 
 ListResource::ModificationResult ListResource::insertAt(QVariant data, int index, QString token)
 {
-    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
-    if(user.isNull() || !_allowUserAccess)
+    iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
+    if(!isPermittedToWrite(identity) || !_allowUserAccess)
     {
         ModificationResult result;
         result.error =  PERMISSION_DENIED;
         return result;
     }
 
-    return insertAt(data, index, user);
+    return insertAt(data, index, identity);
 }
 
 IResource::ModificationResult ListResource::insertAt(QVariant data, int index, iIdentityPtr user)
@@ -152,16 +152,16 @@ IResource::ModificationResult ListResource::insertAt(QVariant data, int index, i
 
 ListResource::ModificationResult ListResource::appendList(QVariantList data, QString token)
 {
-    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
+    iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
 
-    if(user.isNull() || !_allowUserAccess)
+    if(!isPermittedToWrite(identity) || !_allowUserAccess)
     {
         ModificationResult result;
         result.error =  PERMISSION_DENIED;
         return result;
     }
 
-    return appendList(data, user);
+    return appendList(data, identity);
 }
 
 ListResource::ModificationResult ListResource::appendList(QVariantList data, iIdentityPtr user)
@@ -211,16 +211,16 @@ void ListResource::resetData(QVariantList data, iIdentityPtr user)
 
 ListResource::ModificationResult ListResource::removeItem(QString uuid, QString token, int index)
 {
-    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
+    iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
 
-    if(user.isNull() || !_allowUserAccess)
+    if(!isPermittedToWrite(identity)|| !_allowUserAccess)
     {
         ModificationResult result;
         result.error =  PERMISSION_DENIED;
         return result;
     }
 
-    return removeItem(index, user, uuid);
+    return removeItem(index, identity, uuid);
 }
 
 IResource::ModificationResult ListResource::removeItem(int index, iIdentityPtr user, QString uuid)
@@ -243,25 +243,25 @@ IResource::ModificationResult ListResource::removeItem(int index, iIdentityPtr u
 
 ListResource::ModificationResult ListResource::deleteList(QString token)
 {
-    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
-    if(user.isNull() || !_allowUserAccess)
+    iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
+    if(!isPermittedToWrite(identity)|| !_allowUserAccess)
     {
         ModificationResult result;
         result.error =  PERMISSION_DENIED;
         return result;
     }
 
-    return deleteList(user);
+    return deleteList(identity);
 }
 
-IResource::ModificationResult ListResource::deleteList(iIdentityPtr user)
+IResource::ModificationResult ListResource::deleteList(iIdentityPtr identity)
 {
     ModificationResult result;
     _mutex.lockForWrite();
     _lastAccess = QDateTime::currentMSecsSinceEpoch();
     if(_listStorage && _listStorage->deleteList())
     {
-        Q_EMIT listDeleted(user);
+        Q_EMIT listDeleted(identity);
     }
     else
     {
@@ -273,15 +273,15 @@ IResource::ModificationResult ListResource::deleteList(iIdentityPtr user)
 
 ListResource::ModificationResult ListResource::clearList(QString token)
 {
-    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
-    if(user.isNull() || !_allowUserAccess)
+    iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
+    if(!isPermittedToWrite(identity) || !_allowUserAccess)
     {
         ModificationResult result;
         result.error =  PERMISSION_DENIED;
         return result;
     }
 
-    return clearList(user);
+    return clearList(identity);
 
 }
 
@@ -307,15 +307,15 @@ IResource::ModificationResult ListResource::clearList(iIdentityPtr user)
 ListResource::ModificationResult ListResource::set(QVariant data, int index, QString uuid, QString token)
 {
     ModificationResult result;
-    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
+    iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
 
-    if(user.isNull() | !_allowUserAccess)
+    if(!isPermittedToWrite(identity)| !_allowUserAccess)
     {
         result.error =  PERMISSION_DENIED;
         return result;
     }   
 
-    return set(data, index, user, uuid);
+    return set(data, index, identity, uuid);
 }
 
 IResource::ModificationResult ListResource::set(QVariant data, int index, iIdentityPtr user, QString uuid)
@@ -362,16 +362,16 @@ IResource::ModificationResult ListResource::set(QVariant data, int index, iIdent
 ListResource::ModificationResult ListResource::setProperty(QString property, QVariant data, int index, QString uuid, QString token)
 {
 
-    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
+    iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
 
-    if(user.isNull() || !_allowUserAccess)
+    if(!isPermittedToWrite(identity) || !_allowUserAccess) // TODO: call isPermittedToWrite here
     {
         ModificationResult result;
         result.error =  PERMISSION_DENIED;
         return result;
     }
 
-    return setProperty(property, data, index, user, uuid);
+    return setProperty(property, data, index, identity, uuid);
 }
 
 
@@ -455,16 +455,14 @@ bool ListResource::setFilter(QVariantMap query  )
     return false;
 }
 
-bool ListResource::isPermittedToRead(QString token) const
+bool ListResource::isPermittedToRead(iIdentityPtr identity) const
 {
-    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
-    return !user.isNull();
+    return !identity.isNull();
 }
 
-bool ListResource::isPermittedToWrite(QString token) const
+bool ListResource::isPermittedToWrite(iIdentityPtr identity) const
 {
-    iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
-    return !user.isNull();
+    return !identity.isNull();
 }
 
 const QString ListResource::getResourceType() const

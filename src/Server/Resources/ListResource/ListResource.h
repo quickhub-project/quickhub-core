@@ -179,7 +179,7 @@ public:
         Overwrite this function and return false when the appropriate user is not permitted to read the data
         in this resource. If false is returned
     */
-    virtual bool               isPermittedToRead(QString token) const;
+    virtual bool               isPermittedToRead(iIdentityPtr identity) const;
 
     /*!
         \fn bool ListResource::isPermittedToWrite(QString token) const
@@ -187,7 +187,7 @@ public:
         in this resource. You should 
         \note This function is currently not yet used. It is not checked at any point and has no effect at the moment!
     */
-    virtual bool               isPermittedToWrite(QString token) const;
+    virtual bool               isPermittedToWrite(iIdentityPtr identity) const;
 
 signals:
     void itemAppended(QVariant data, iIdentityPtr user);
