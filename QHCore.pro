@@ -24,6 +24,7 @@ SOURCES += src/Server/Authentication/AuthentificationService.cpp \
     src/Server/Devices/DeviceUpdateLogic.cpp \
     src/Server/Devices/IDevicePermissionController.cpp \
     src/Server/Resources/ListResource/ListResource.cpp \
+    src/Server/Resources/ListResource/QObjectListResource.cpp \
     src/Server/Resources/ResourceManager/ResourceManager.cpp \
     src/Server/Resources/ObjectResource/ObjectResource.cpp \
     src/Server/Resources/ResourceManager/IResource.cpp \
@@ -61,6 +62,7 @@ HEADERS += \
     src/Server/Devices/DeviceUpdateLogic.h \
     src/Server/Devices/IDevicePermissionController.h \
     src/Server/Resources/ListResource/ListResource.h \
+    src/Server/Resources/ListResource/QObjectListResource.h \
     src/Server/Resources/ResourceManager/IResource.h \
     src/Server/Resources/ResourceManager/ResourceManager.h \
     src/Server/Resources/ObjectResource/ObjectResource.h \
