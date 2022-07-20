@@ -70,8 +70,11 @@ Connection::~Connection()
 
 void Connection::connect(QString ident)
 {
-    if(_socket)
+    if(_socket && _socket->state() != QAbstractSocket::ConnectingState)
+    {
+
         _socket->open(ident);
+    }
 }
 
 void Connection::addVirtualConnection(VirtualConnection *connection)
