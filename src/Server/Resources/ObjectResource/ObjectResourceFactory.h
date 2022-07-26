@@ -8,18 +8,21 @@
 #define OBJECTRESOURCEFACTORY_H
 
 #include "../ResourceManager/IResourceFactory.h"
+#include "IObjectResourceStorageFactory.h"
 
 class ObjectResourceFactory : public IResourceFactory
 {
 
 public:
     ObjectResourceFactory(QObject* parent = nullptr);
+    ObjectResourceFactory(IObjectResourceStorageFactory* storageFactory, QObject* parent = nullptr);
     QString getResourceType() const override;
+
+    void setAlternativeStorageFactory(IObjectResourceStorageFactory *newAlternativeStorageFactory);
 
 private:
     resourcePtr createResource(QString token, QString descriptor, QObject *parent) override;
-
-
+    IObjectResourceStorageFactory* _alternativeStorageFactory;
 };
 
 #endif // OBJECTRESOURCEFACTORY_H

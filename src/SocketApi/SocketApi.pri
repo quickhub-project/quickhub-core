@@ -48,6 +48,4 @@ HEADERS +=  $$PWD/SocketCore/SocketResourceManager.h \
 
 INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/..
-INCLUDEPATH += ../../../QHPluginSystem
-LIBS += -lQHPluginSystem -L../../../bin/lib
 

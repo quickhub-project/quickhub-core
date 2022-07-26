@@ -12,7 +12,7 @@
 #include <QWebSocket>
 #include "Server/Authentication/AuthentificationService.h"
 #include "Server/Authentication/DefaultAuthenticator.h"
-#include "SocketCore/IRequestHandler.h"
+#include "SocketApi/SocketCore/IRequestHandler.h"
 
 class SessionHandler : public IRequestHandler
 {

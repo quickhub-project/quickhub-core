@@ -4,15 +4,19 @@
  * It is part of the QuickHub framework - www.quickhub.org
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
-#include "ObjectResourceFactory.h"
-#include "ObjectResource.h"
 #include "IObjectResourceStorageFactory.h"
-#include "PluginManager.h"
+#include "ObjectResource.h"
 #include "Storage/ObjectResourceFilesystemStorage.h"
-
+#include "../ResourceManager/IResourceFactory.h"
 
 ObjectResourceFactory::ObjectResourceFactory(QObject* parent) : IResourceFactory(parent)
 {
+}
+
+ObjectResourceFactory::ObjectResourceFactory(IObjectResourceStorageFactory *storageFactory, QObject *parent) : IResourceFactory(parent),
+    _alternativeStorageFactory(storageFactory)
+{
+
 }
 
 QString ObjectResourceFactory::getResourceType() const
@@ -28,18 +32,25 @@ resourcePtr ObjectResourceFactory::createResource(QString token, QString descrip
         return resourcePtr();
 
     QString resourceName = generateQualifiedResourceName(descriptor, token);
-    QList<IObjectResourceStorageFactory*> storagePlugins = PluginManager::getInstance()->getObjects<IObjectResourceStorageFactory>();
+
     IObjectResourceStorage* storage = nullptr;
-    if(storagePlugins.count() > 0)
-    {
-        qInfo()<< "Create ObjectResource with external storage plugin.";
-        storage = storagePlugins[0]->createInstance(resourceName, nullptr);
-    }
-    else //fallback implementation
+
+    // default implementation
+    if(nullptr == _alternativeStorageFactory)
     {
         storage = new ObjectResourceFilesystemStorage(resourceName, nullptr);
         qInfo()<<"Create ObjectResource with FS Resource Handler  "<<resourceName;
     }
+    else
+    {
+        qInfo()<< "Create ObjectResource with external storage plugin.";
+        storage = _alternativeStorageFactory->createInstance(resourceName, nullptr);
+    }
 
     return resourcePtr(new ObjectResource(storage, parent));
+}
+
+void ObjectResourceFactory::setAlternativeStorageFactory(IObjectResourceStorageFactory *newAlternativeStorageFactory)
+{
+    _alternativeStorageFactory = newAlternativeStorageFactory;
 }

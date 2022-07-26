@@ -9,19 +9,22 @@
 #define LISTRESOURCEFACTORY_H
 
 #include "../ResourceManager/IResourceFactory.h"
-
+#include "IListResourceStorageFactory.h"
 
 class ListResourceFactory : public IResourceFactory
 {
     Q_OBJECT
 
 public:
+    ListResourceFactory(IListResourceStorageFactory* storageFactory = nullptr, QObject* parent = nullptr);
     ListResourceFactory(QObject* parent = nullptr);
     QString getResourceType() const override;
 
+    void setAlternativeStorageFactory(IListResourceStorageFactory *newAlternativeStorageFactory);
+
 private:
     resourcePtr createResource(QString token, QString descriptor, QObject *parent) override;
-
+    IListResourceStorageFactory* _alternativeStorageFactory;
 };
 
 #endif // LISTRESOURCEFACTORY_H

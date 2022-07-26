@@ -4,14 +4,15 @@
  * It is part of the QuickHub framework - www.quickhub.org
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
-
-
 #include <QDebug>
 #include "ListResourceFactory.h"
 #include "ListResource.h"
-#include "PluginManager.h"
-#include "IListResourceStorageFactory.h"
 #include "Storage/ListResourceFileSystemStorage.h"
+
+ListResourceFactory::ListResourceFactory(IListResourceStorageFactory* storageFactory, QObject *parent) : IResourceFactory(parent),
+    _alternativeStorageFactory(storageFactory)
+{
+}
 
 ListResourceFactory::ListResourceFactory(QObject *parent) : IResourceFactory(parent)
 {
@@ -31,19 +32,25 @@ resourcePtr ListResourceFactory::createResource(QString token, QString descripto
         return resourcePtr();
 
     QString resourceName = generateQualifiedResourceName(descriptor, token);
-    QList<IListResourceStorageFactory*> storagePlugins = PluginManager::getInstance()->getObjects<IListResourceStorageFactory>();
+
     IListResourceStorage* storage = nullptr;
-    if(storagePlugins.count() > 0)
-    {
-        qInfo()<< "Create ListResource with external storage plugin.";
-        storage = storagePlugins[0]->createInstance(resourceName, nullptr);
-    }
-    else //fallback implementation
+
+    // default implementation
+    if(nullptr == _alternativeStorageFactory)
     {
         storage = new ListResourceFileSystemStorage(resourceName, nullptr);
         qInfo()<<"Create ListResource with FS Resource Handler"<<resourceName;
     }
-
+    else
+    {
+        qInfo()<< "Create ListResource with external storage plugin.";
+        storage = _alternativeStorageFactory->createInstance(resourceName, nullptr);
+    }
 
     return resourcePtr(new ListResource(storage));
+}
+
+void ListResourceFactory::setAlternativeStorageFactory(IListResourceStorageFactory *newAlternativeStorageFactory)
+{
+    _alternativeStorageFactory = newAlternativeStorageFactory;
 }

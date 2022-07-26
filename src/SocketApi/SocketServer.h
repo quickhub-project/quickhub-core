@@ -27,6 +27,10 @@
 #define SSL_KEY                     _serverRootPath+"config/certificates/server.key"
 
 class IRequestHandler;
+class ListResourceFactory;
+class ObjectResourceFactory;
+class IObjectResourceStorageFactory;
+class IListResourceStorageFactory;
 class SocketServer : public QObject
 {
     Q_OBJECT
@@ -36,21 +40,24 @@ public:
     void        start(QString storageDirectory, quint16 port);
     explicit    SocketServer(QObject *parent = nullptr);
     static      SocketServer* instance();
+    void        setObjectResourceStorageFactory(IObjectResourceStorageFactory* factory);
+    void        setListResourceStorageFactory(IListResourceStorageFactory* factory);
 
 private:
     void                                    initServices();
     bool                                    initSecureServer();
     void                                    initNonSecureServer();
 
-    QWebSocketServer*                       _server;
+    QWebSocketServer*                       _server = nullptr;
     QString                                 _serverRootPath;
     QString                                 _dataStoragePath;
     QString                                 _usersPath;
     QList<QWebSocket*>                      _allConnections;
-    AuthenticationService*                  _authenticationService;
+    AuthenticationService*                  _authenticationService = nullptr;;
     QVector<IRequestHandler*>               _handlers;
     QVector<Connection*>                    _connections;
-   // QVector<ISocket*>                       _handles;
+    ListResourceFactory*                    _listResourceFactory= nullptr;
+    ObjectResourceFactory*                  _objectResourceFactory = nullptr;
     QList<QThread*>                         _threadPool;
     int                                     _port;
 

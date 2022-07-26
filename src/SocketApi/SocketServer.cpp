@@ -44,6 +44,16 @@ SocketServer *SocketServer::instance()
     return socketServer;
 }
 
+void SocketServer::setObjectResourceStorageFactory(IObjectResourceStorageFactory *factory)
+{
+    _objectResourceFactory->setAlternativeStorageFactory(factory);
+}
+
+void SocketServer::setListResourceStorageFactory(IListResourceStorageFactory *factory)
+{
+    _listResourceFactory->setAlternativeStorageFactory(factory);
+}
+
 
 void SocketServer::addRequestHandler(IRequestHandler *handler)
 {
@@ -84,8 +94,10 @@ void SocketServer::initServices()
     _authenticationService->setParent(this);
 
     ResourceManager* resourceManager = ResourceManager::instance();
-    resourceManager->addResourceFactory(new ListResourceFactory(this));
-    resourceManager->addResourceFactory(new ObjectResourceFactory(this));
+    _listResourceFactory = new ListResourceFactory(this);
+    resourceManager->addResourceFactory(_listResourceFactory);
+    _objectResourceFactory = new ObjectResourceFactory(this);
+    resourceManager->addResourceFactory(_objectResourceFactory);
     resourceManager->addResourceFactory(new ImageResourceFactory(this));
     resourceManager->addResourceFactory(SettingsManager::instance());
 

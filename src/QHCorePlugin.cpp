@@ -12,6 +12,12 @@
 #include "Server/Devices/DeviceService.h"
 #include "Server/Services/ServiceManager.h"
 
+#include "Server/Resources/ListResource/ListResourceFactory.h"
+#include "Server/Resources/ObjectResource/ObjectResourceFactory.h"
+#include "Server/Resources/ResourceManager/ResourceManager.h"
+
+#include "PluginManager.h"
+
 QHCorePlugin::QHCorePlugin(QObject* parent) : IPlugin(parent)
 {
 }
@@ -22,6 +28,18 @@ bool QHCorePlugin::init(QVariantMap parameters)
     QString path =  parameters.value("f", QStandardPaths::standardLocations(QStandardPaths::DataLocation).at(0)+"/v1.3/").toString();
     ServiceManager::instance()->registerService(new DeviceService(this));
     SocketServer::instance()->start(path, static_cast<quint16>(port));
+    QList<IListResourceStorageFactory*> listStoragePlugins = PluginManager::getInstance()->getObjects<IListResourceStorageFactory>();
+    if(listStoragePlugins.count() > 0)
+    {
+        SocketServer::instance()->setListResourceStorageFactory(listStoragePlugins.at(0));
+    }
+
+    QList<IObjectResourceStorageFactory*> objectStoragePlugins = PluginManager::getInstance()->getObjects<IObjectResourceStorageFactory>();
+    if(objectStoragePlugins.count() > 0)
+    {
+        SocketServer::instance()->setObjectResourceStorageFactory(objectStoragePlugins.at(0));
+    }
+
     qInstallMessageHandler(Logger::handleMessage);
     return true;
 }
