@@ -38,13 +38,13 @@ resourcePtr ObjectResourceFactory::createResource(QString token, QString descrip
     // default implementation
     if(nullptr == _alternativeStorageFactory)
     {
-        storage = new ObjectResourceFilesystemStorage(resourceName, nullptr);
-        qInfo()<<"Create ObjectResource with FS Resource Handler  "<<resourceName;
+        qInfo()<< "Create ObjectResource with external storage plugin.";
+        storage = _alternativeStorageFactory->createInstance(resourceName, nullptr);
     }
     else
     {
-        qInfo()<< "Create ObjectResource with external storage plugin.";
-        storage = _alternativeStorageFactory->createInstance(resourceName, nullptr);
+        storage = new ObjectResourceFilesystemStorage(resourceName, nullptr);
+        qInfo()<<"Create ObjectResource with FS Resource Handler  "<<resourceName;
     }
 
     return resourcePtr(new ObjectResource(storage, parent));

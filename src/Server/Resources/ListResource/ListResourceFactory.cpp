@@ -38,13 +38,13 @@ resourcePtr ListResourceFactory::createResource(QString token, QString descripto
     // default implementation
     if(nullptr == _alternativeStorageFactory)
     {
-        storage = new ListResourceFileSystemStorage(resourceName, nullptr);
-        qInfo()<<"Create ListResource with FS Resource Handler"<<resourceName;
+        qInfo()<< "Create ListResource with external storage plugin.";
+        storage = _alternativeStorageFactory->createInstance(resourceName, nullptr);
     }
     else
     {
-        qInfo()<< "Create ListResource with external storage plugin.";
-        storage = _alternativeStorageFactory->createInstance(resourceName, nullptr);
+        storage = new ListResourceFileSystemStorage(resourceName, nullptr);
+        qInfo()<<"Create ListResource with FS Resource Handler"<<resourceName;
     }
 
     return resourcePtr(new ListResource(storage));
