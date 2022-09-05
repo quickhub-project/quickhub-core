@@ -9,17 +9,21 @@
 
 #include <QObject>
 #include "../ResourceManager/IResourceFactory.h"
+#include "IImageResourceStorageFactory.h"
 
 class ImageResourceFactory : public  IResourceFactory
 {
     Q_OBJECT
 
 public:
+    ImageResourceFactory(IImageResourceStorageFactory *storageFactory, QObject* parent = 0);
     ImageResourceFactory(QObject* parent = 0);
     QString getResourceType() const override;
+    void setAlternativeStorageFactory(IImageResourceStorageFactory *newAlternativeStorageFactory);
 
 private:
     resourcePtr createResource(QString token, QString descriptor, QObject *parent) override;
+    IImageResourceStorageFactory* _alternativeStorageFactory;
 };
 
 #endif // IMAGERESOURCEFACTORY_H

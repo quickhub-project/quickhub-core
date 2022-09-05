@@ -28,9 +28,11 @@
 
 class IRequestHandler;
 class ListResourceFactory;
+class ImageResourceFactory;
 class ObjectResourceFactory;
 class IObjectResourceStorageFactory;
 class IListResourceStorageFactory;
+class IImageResourceStorageFactory;
 class SocketServer : public QObject
 {
     Q_OBJECT
@@ -39,9 +41,10 @@ public:
     void        addRequestHandler(IRequestHandler* handler);
     void        start(QString storageDirectory, quint16 port);
     explicit    SocketServer(QObject *parent = nullptr);
-    static      SocketServer* instance();
     void        setObjectResourceStorageFactory(IObjectResourceStorageFactory* factory);
     void        setListResourceStorageFactory(IListResourceStorageFactory* factory);
+    void        setImageResourceStorageFactory(IImageResourceStorageFactory* factory);
+    static      SocketServer* instance();
 
 private:
     void                                    initServices();
@@ -56,8 +59,9 @@ private:
     AuthenticationService*                  _authenticationService = nullptr;;
     QVector<IRequestHandler*>               _handlers;
     QVector<Connection*>                    _connections;
-    ListResourceFactory*                    _listResourceFactory= nullptr;
+    ListResourceFactory*                    _listResourceFactory = nullptr;
     ObjectResourceFactory*                  _objectResourceFactory = nullptr;
+    ImageResourceFactory*                   _imageResourceFactory = nullptr;
     QList<QThread*>                         _threadPool;
     int                                     _port;
 

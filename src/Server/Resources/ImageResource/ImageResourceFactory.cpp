@@ -5,17 +5,19 @@
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
 #include "ImageResourceFactory.h"
-
-#include "ImageResourceFactory.h"
 #include "ImageResource.h"
-#include "PluginManager.h"
 #include "IImageResourceStorageFactory.h"
-#include "../src/Storage/ImageResourceFilesystemStorage.h"
+#include "Storage/ImageResourceFilesystemStorage.h"
 
+ImageResourceFactory::ImageResourceFactory(IImageResourceStorageFactory*  storageFactory, QObject *parent) : IResourceFactory(parent),
+    _alternativeStorageFactory(storageFactory)
+{
+    
+}
 
 ImageResourceFactory::ImageResourceFactory(QObject *parent) : IResourceFactory(parent)
 {
-    
+
 }
 
 QString ImageResourceFactory::getResourceType() const
@@ -30,15 +32,25 @@ resourcePtr ImageResourceFactory::createResource(QString token, QString descript
         return resourcePtr();
 
     QString resourceName = generateQualifiedResourceName(descriptor, token);
-    QList<IImageResourceStorageFactory*> storagePlugins = PluginManager::getInstance()->getObjects<IImageResourceStorageFactory>();
+
     IImageResourceStorage* storage = nullptr;
-    if(storagePlugins.count() > 0)
+
+    // default implementation
+    if(nullptr == _alternativeStorageFactory)
     {
-        qInfo()<< "Create ImageResource with external storage plugin.";
-        storage = storagePlugins[0]->createInstance(resourceName, nullptr);
+        qInfo()<< "Create ListResource with external storage plugin.";
+        storage = _alternativeStorageFactory->createInstance(resourceName, nullptr);
     }
-    else //fallback implementation
+    else
+    {
         storage = new ImageResourceFilesystemStorage(resourceName, nullptr);
+        qInfo()<<"Create ListResource with FS Resource Handler"<<resourceName;
+    }
 
     return resourcePtr(new ImageResource(storage, parent));
+}
+
+void ImageResourceFactory::setAlternativeStorageFactory(IImageResourceStorageFactory *newAlternativeStorageFactory)
+{
+    _alternativeStorageFactory = newAlternativeStorageFactory;
 }

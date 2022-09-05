@@ -54,6 +54,11 @@ void SocketServer::setListResourceStorageFactory(IListResourceStorageFactory *fa
     _listResourceFactory->setAlternativeStorageFactory(factory);
 }
 
+void SocketServer::setImageResourceStorageFactory(IImageResourceStorageFactory *factory)
+{
+    _imageResourceFactory->setAlternativeStorageFactory(factory);
+}
+
 
 void SocketServer::addRequestHandler(IRequestHandler *handler)
 {
@@ -98,7 +103,8 @@ void SocketServer::initServices()
     resourceManager->addResourceFactory(_listResourceFactory);
     _objectResourceFactory = new ObjectResourceFactory(this);
     resourceManager->addResourceFactory(_objectResourceFactory);
-    resourceManager->addResourceFactory(new ImageResourceFactory(this));
+    _imageResourceFactory = new ImageResourceFactory(this);
+    resourceManager->addResourceFactory(_imageResourceFactory);
     resourceManager->addResourceFactory(SettingsManager::instance());
 
     _handlers << new SessionHandler(this);
