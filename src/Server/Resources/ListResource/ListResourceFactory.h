@@ -16,7 +16,7 @@ class ListResourceFactory : public IResourceFactory
     Q_OBJECT
 
 public:
-    ListResourceFactory(IListResourceStorageFactory* storageFactory = nullptr, QObject* parent = nullptr);
+    ListResourceFactory(IListResourceStorageFactory* storageFactory, QObject* parent = nullptr);
     ListResourceFactory(QObject* parent = nullptr);
     QString getResourceType() const override;
 
@@ -24,7 +24,7 @@ public:
 
 private:
     resourcePtr createResource(QString token, QString descriptor, QObject *parent) override;
-    IListResourceStorageFactory* _alternativeStorageFactory;
+    IListResourceStorageFactory* _alternativeStorageFactory = nullptr;
 };
 
 #endif // LISTRESOURCEFACTORY_H
