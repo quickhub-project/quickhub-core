@@ -82,7 +82,6 @@ resourcePtr ResourceManager::getOrCreateResource(QString type, QString descripto
 
     if(!resource.isNull())
     {
-        resource->moveToThread(qApp->thread());
         resource->setParent(this);
         if(!resource->dynamicContent())
             addResource(resource, resourceId);

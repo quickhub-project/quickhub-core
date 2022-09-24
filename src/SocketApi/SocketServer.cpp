@@ -169,7 +169,7 @@ void SocketServer::initNonSecureServer()
 void SocketServer::newConnection()
 {
     QWebSocket* newSocket = _server->nextPendingConnection();
-    Connection* connection = new Connection(newSocket,  QCoreApplication::instance());
+    Connection* connection = new Connection(newSocket);
     qInfo() << connection->getRemoteID() <<" has connected.";
     _connections << connection;
     connect(connection, &Connection::newConnection, this, &SocketServer::newVirtualConnection);
