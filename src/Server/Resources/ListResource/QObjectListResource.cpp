@@ -1,7 +1,7 @@
 #include "QObjectListResource.h"
 #include <QDateTime>
 #include <QUuid>
-#include <sys/socket.h>
+
 QObjectListResource::QObjectListResource(QObject *parent) : ListResource{nullptr, parent}
 {
     setDynamicContent(false);

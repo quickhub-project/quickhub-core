@@ -7,7 +7,6 @@
 #include "SettingsManager.h"
 #include "SettingsResource.h"
 #include "../Resources/ObjectResource/IObjectResourceStorageFactory.h"
-#include "PluginManager.h"
 #include "Storage/ObjectResourceFilesystemStorage.h"
 
 Q_GLOBAL_STATIC(SettingsManager, settingsResourceFactory);
