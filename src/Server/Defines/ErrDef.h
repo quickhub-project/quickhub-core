@@ -5,8 +5,8 @@
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
 
-#ifndef ENUMS_H
-#define ENUMS_H
+#ifndef ENUMSERRDEF_H
+#define ENUMSERRDEF_H
 #include <QObject>
 
 class Err : QObject
