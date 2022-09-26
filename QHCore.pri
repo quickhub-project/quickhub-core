@@ -17,6 +17,7 @@ SOURCES += $$PWD/src/Server/Authentication/AuthentificationService.cpp \
     $$PWD/src/Server/Devices/IDevicePermissionController.cpp \
     $$PWD/src/Server/Resources/ListResource/ListResource.cpp \
     $$PWD/src/Server/Resources/ListResource/QObjectListResource.cpp \
+    $$PWD/src/Server/Resources/ObjectResource/QObjectResource.cpp \
     $$PWD/src/Server/Resources/ResourceManager/ResourceManager.cpp \
     $$PWD/src/Server/Resources/ObjectResource/ObjectResource.cpp \
     $$PWD/src/Server/Resources/ResourceManager/IResource.cpp \
@@ -55,6 +56,7 @@ HEADERS += \
     $$PWD/src/Server/Devices/IDevicePermissionController.h \
     $$PWD/src/Server/Resources/ListResource/ListResource.h \
     $$PWD/src/Server/Resources/ListResource/QObjectListResource.h \
+    $$PWD/src/Server/Resources/ObjectResource/QObjectResource.h \
     $$PWD/src/Server/Resources/ResourceManager/IResource.h \
     $$PWD/src/Server/Resources/ResourceManager/ResourceManager.h \
     $$PWD/src/Server/Resources/ObjectResource/ObjectResource.h \
