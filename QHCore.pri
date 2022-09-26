@@ -2,7 +2,7 @@ QT += core websockets concurrent gui
 
 CONFIG += c++11
 INCLUDEPATH += src
-
+DEFINES += NO_PLUGIN
 include(src/SocketApi/SocketApi.pri)
 
 SOURCES += $$PWD/src/Server/Authentication/AuthentificationService.cpp \
