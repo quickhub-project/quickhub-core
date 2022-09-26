@@ -39,7 +39,6 @@ class SocketServer : public QObject
 
 public:
     void        addRequestHandler(IRequestHandler* handler);
-    void        start(QString storageDirectory, quint16 port);
     explicit    SocketServer(QObject *parent = nullptr);
     void        setObjectResourceStorageFactory(IObjectResourceStorageFactory* factory);
     void        setListResourceStorageFactory(IListResourceStorageFactory* factory);
@@ -67,7 +66,8 @@ private:
 
 
 public slots:
-    void newVirtualConnection(ISocket* handle);
+    void        newVirtualConnection(ISocket* handle);
+    void        start(QString storageDirectory, quint16 port);
 
 private slots:
     void newConnection();
