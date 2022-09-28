@@ -23,7 +23,6 @@ bool DeviceManager::registerDevice(iDevicePtr device)
     QString uuid = device->uuid();
     _shortIDtoUid.insert(device->shortId().toUpper(), uuid);
     connect(device.data(), &IDevice::deregistered, this, &DeviceManager::deregisterDevice);
-    device->setParent(this);
     qInfo()<<"Device registered: "<<uuid;
     _deviceMap.insert(uuid, device);
     // Handles are listening to that signal.
@@ -115,7 +114,7 @@ deviceHandlePtr DeviceManager::getHandleByMapping(QString mapping)
             return weakhandle.toStrongRef();
     }
 
-    handle.reset(new DeviceHandle("", this));
+    handle.reset(new DeviceHandle(""));
     _handleByMappings.insert(mapping, handle);
 
     return handle;
@@ -170,7 +169,7 @@ deviceHandlePtr DeviceManager::addDeviceHandle(QString uuid)
         return _handles.value(uuid);
 
     QString path = _storagePath +"/handles/"+uuid;
-    deviceHandlePtr deviceHandle(new DeviceHandle(uuid, path, this));
+    deviceHandlePtr deviceHandle(new DeviceHandle(uuid, path));
     _handles.insert(uuid, deviceHandle);
     Q_EMIT newDeviceHandle(uuid);
     return deviceHandle;

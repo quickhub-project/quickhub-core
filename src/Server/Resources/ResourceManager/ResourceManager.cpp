@@ -82,7 +82,7 @@ resourcePtr ResourceManager::getOrCreateResource(QString type, QString descripto
 
     if(!resource.isNull())
     {
-        resource->setParent(this);
+      //  resource->setParent(this);
         if(!resource->dynamicContent())
             addResource(resource, resourceId);
     }
