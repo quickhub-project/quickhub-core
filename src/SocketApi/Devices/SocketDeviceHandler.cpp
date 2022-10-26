@@ -21,18 +21,30 @@ bool SocketDeviceHandler::handleRequest(QVariantMap message, ISocket *socket)
     {
         QVariantMap data = message["parameters"].toMap();
         QString uuid = data["id"].toString();
+        quint32 authkey = data["key"].toUInt();
         QSharedPointer<SocketDevice> device = qSharedPointerObjectCast<SocketDevice>(DeviceManager::instance()->getDeviceByUuid(uuid));
         socket->setKeepAlive(15000, 5000); // before: 30s / 10s
         if(device)
         {
-            //update the already existing instance with the new property values
-            device->deregistered(device->uuid());
+            // Even if it is a bit hacked it can not be avoided: The Auth token must be
+            // checked BEFORE an authenticated device is kicked out of the session by
+            // an unauthenticated device.
+            deviceHandlePtr handle = DeviceManager::instance()->getHandle(uuid);
+            if(handle->getAuthentificationKey() != authkey)
+            {
+                qWarning() << "Unauthenticated device has tried to log in!";
+                return true;
+            }
+            // update the already existing instance with the new property values
+            DeviceManager::instance()->deregisterDevice(device->uuid());
         }
         else
         {
             device = QSharedPointer<SocketDevice>(new SocketDevice());
         }
-        device->init(message["parameters"].toMap(), socket);
+
+        // re-init existing device the new connection
+        device->init(data, socket);
         DeviceManager::instance()->registerDevice(qSharedPointerObjectCast<IDevice>(device));
 
         return true;

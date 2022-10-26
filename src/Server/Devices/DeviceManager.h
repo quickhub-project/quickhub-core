@@ -166,7 +166,7 @@ private:
     void loadMappings();
     void loadHandles();
 
-private slots:
+public slots:
     void deregisterDevice(QString uuid);
 
 signals:
