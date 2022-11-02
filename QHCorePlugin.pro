@@ -10,6 +10,7 @@ LIBS += -lQHPluginSystem -L../bin/lib
 DESTDIR = ../bin/plugins
 TEMPLATE = lib
 DEFINES += COREPLUGIN_LIBRARY
+DEFINES += NO_GUI
 
 include(QHCore.pri)
 

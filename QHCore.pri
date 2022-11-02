@@ -1,9 +1,26 @@
-QT += core websockets concurrent gui
+QT += core websockets concurrent
 
 CONFIG += c++11
 INCLUDEPATH += src
 DEFINES += NO_PLUGIN
 include(src/SocketApi/SocketApi.pri)
+
+!contains(DEFINES, NO_GUI) {
+
+QT += gui
+
+SOURCES += \
+    $$PWD/src/Server/Resources/ImageResource/ImageResource.cpp \
+    $$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.cpp \
+    $$PWD/src/Storage/ImageResourceFilesystemStorage.cpp
+
+HEADERS += \
+    $$PWD/src/Server/Resources/ImageResource/ImageResource.h \
+    $$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.h \
+    $$PWD/src/Server/Resources/ImageResource/IImageResourceStorage.h \
+    $$PWD/src/Server/Resources/ImageResource/IImageResourceStorageFactory.h \
+    $$PWD/src/Storage/ImageResourceFilesystemStorage.h
+}
 
 SOURCES += $$PWD/src/Server/Authentication/AuthentificationService.cpp \
     $$PWD/src/Server/Authentication/Controller.cpp \
@@ -30,17 +47,14 @@ SOURCES += $$PWD/src/Server/Authentication/AuthentificationService.cpp \
     $$PWD/src/Server/Settings/SettingsManager.cpp \
     $$PWD/src/Server/Settings/SettingsResource.cpp \
     $$PWD/src/Storage/FileSystemPaths.cpp \
-    $$PWD/src/Storage/ListResourceFileSystemStorage.cpp \
-    $$PWD/src/Server/Resources/ImageResource/ImageResource.cpp \
-    $$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.cpp \
-    $$PWD/src/Storage/ImageResourceFilesystemStorage.cpp \
+    $$PWD/src/Storage/ListResourceFileSystemStorage.cpp  \
     $$PWD/src/Storage/ObjectResourceFilesystemStorage.cpp \
     $$PWD/src/Server/Logging/Logger.cpp \
     $$PWD/src/Server/Services/ServiceManager.cpp \
     $$PWD/src/Storage/ListResourceTemporaryStorage.cpp \
     $$PWD/src/Server/Authentication/IUser.cpp \
     $$PWD/src/Server/Authentication/DefaultAuthenticator.cpp \
-    $$PWD/src/Storage/FileSystemLoader.cpp
+    $$PWD/src/Storage/FileSystemLoader.cpp 
 
 HEADERS += \
     $$PWD/src/Server/Authentication/AuthentificationService.h \
@@ -75,11 +89,6 @@ HEADERS += \
     $$PWD/src/Server/Resources/ListResource/IListResourceStorage.h \
     $$PWD/src/Storage/ListResourceFileSystemStorage.h \
     $$PWD/src/Server/Resources/ListResource/IListResourceStorageFactory.h \
-    $$PWD/src/Server/Resources/ImageResource/ImageResource.h \
-    $$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.h \
-    $$PWD/src/Server/Resources/ImageResource/IImageResourceStorage.h \
-    $$PWD/src/Server/Resources/ImageResource/IImageResourceStorageFactory.h \
-    $$PWD/src/Storage/ImageResourceFilesystemStorage.h \
     $$PWD/src/Server/Resources/ObjectResource/IObjectResourceStorage.h \
     $$PWD/src/Server/Resources/ObjectResource/IObjectResourceStorageFactory.h \
     $$PWD/src/Storage/ObjectResourceFilesystemStorage.h \
