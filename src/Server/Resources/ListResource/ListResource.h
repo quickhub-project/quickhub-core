@@ -202,14 +202,14 @@ signals:
     void reset();
 
 private:
-    QVariantMap     prepareTemplate(iIdentityPtr user) const;
-    QString         createUUID() const;
+    QString                 createUUID() const;
     bool                    _allowUserAccess = true;
     qint64                  _lastAccess;
     IListResourceStorage*   _listStorage;
 
 protected:
     mutable QReadWriteLock  _mutex;
+    QVariantMap        prepareTemplate(iIdentityPtr user) const;
     ModificationResult appendItem(QVariant data, iIdentityPtr user = iIdentityPtr(nullptr));
     ModificationResult insertAt(QVariant data, int index, iIdentityPtr user = iIdentityPtr(nullptr));
     ModificationResult appendList(QVariantList data, iIdentityPtr user = iIdentityPtr(nullptr));

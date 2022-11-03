@@ -23,11 +23,13 @@ public:
     virtual ModificationResult      setProperty(QString property, QVariant data, int index, QString uuid, QString token) override;
     QList<QObject*>                 getObjects();
 
+protected: 
+    QVariantMap                     toVariant(QObject* object) const;
+
 private:
     void                            init(QObject* firstObject);
     void                            connectObject(QObject* object);
     void                            disconnectObject(QObject* object);
-    QVariantMap                     toVariant(QObject* object) const;
 
     bool                            _initialized = false;
     QList<QObject*>                 _items;
