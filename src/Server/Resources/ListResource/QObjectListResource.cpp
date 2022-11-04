@@ -37,7 +37,7 @@ bool QObjectListResource::appendObject(QObject *object)
 	
     _items.append(object);
     connectObject(object);
-    Q_EMIT itemInserted(toVariant(object), _items.count()-1, iUserPtr());
+    Q_EMIT itemAppended(toVariant(object), iUserPtr());
     return true;
 }
 
