@@ -92,7 +92,7 @@ public:
     virtual QString generateQualifiedResourceName(QString descriptor, iIdentityPtr  user) const
     {
         descriptor = descriptor.replace(".","/");
-        QStringList tokens = descriptor.split("/",  SKIP_EMTPY_PARTS);
+        QStringList tokens = descriptor.split("/",  SKIP_EMPTY_PARTS);
         if(tokens[0] == "home" && !user.isNull())
         {
             tokens.insert(1, user->identityID());
