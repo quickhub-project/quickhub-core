@@ -20,11 +20,14 @@
 #include "SocketCore/SocketResourceManager.h"
 #include "ResourceHandler/SynchronizedList/SynchronizedListHandlerFactory.h"
 #include "ResourceHandler/SynchronizedObject/SynchronizedObjectHandlerFactory.h"
-#include "ResourceHandler/ImageCollection/ImageCollectionHandlerFactory.h"
+#ifndef NO_GUI
+    #include "ResourceHandler/ImageCollection/ImageCollectionHandlerFactory.h"
+    #include "Server/Resources/ImageResource/ImageResourceFactory.h"
+#endif
 #include "Server/Devices/DeviceManager.h"
 #include "Server/Resources/ListResource/ListResourceFactory.h"
 #include "Server/Resources/ObjectResource/ObjectResourceFactory.h"
-#include "Server/Resources/ImageResource/ImageResourceFactory.h"
+
 #include "Storage/FileSystemPaths.h"
 #include "Devices/SocketDeviceHandler.h"
 #include "DataHandler/Lists/ListHandlerFactory.h"
@@ -54,11 +57,12 @@ void SocketServer::setListResourceStorageFactory(IListResourceStorageFactory *fa
     _listResourceFactory->setAlternativeStorageFactory(factory);
 }
 
+#ifndef NO_GUI
 void SocketServer::setImageResourceStorageFactory(IImageResourceStorageFactory *factory)
 {
     _imageResourceFactory->setAlternativeStorageFactory(factory);
 }
-
+#endif
 
 void SocketServer::addRequestHandler(IRequestHandler *handler)
 {
@@ -103,8 +107,10 @@ void SocketServer::initServices()
     resourceManager->addResourceFactory(_listResourceFactory);
     _objectResourceFactory = new ObjectResourceFactory(this);
     resourceManager->addResourceFactory(_objectResourceFactory);
-    _imageResourceFactory = new ImageResourceFactory(this);
-    resourceManager->addResourceFactory(_imageResourceFactory);
+    #ifndef NO_GUI
+        _imageResourceFactory = new ImageResourceFactory(this);
+        resourceManager->addResourceFactory(_imageResourceFactory);
+    #endif
     resourceManager->addResourceFactory(SettingsManager::instance());
 
     _handlers << new SessionHandler(this);
@@ -113,10 +119,13 @@ void SocketServer::initServices()
 
     SocketResourceManager* manager = new SocketResourceManager(this);
     manager->registerFactory(new SynchronizedListHandlerFactory(this));
-    manager->registerFactory(new ImageCollectionHandlerFactory(this));
     manager->registerFactory(new SynchronizedObjectHandlerFactory(this));
     manager->registerFactory(new DeviceHandleHandlerFactory(this));
     manager->registerFactory(new ListHandlerFactory(this));
+
+    #ifndef NO_GUI  
+        manager->registerFactory(new ImageCollectionHandlerFactory(this));
+    #endif
     _handlers.append(manager);
 }
 

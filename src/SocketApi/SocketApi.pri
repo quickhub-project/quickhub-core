@@ -1,3 +1,15 @@
+
+!contains(DEFINES, NO_GUI) {
+    SOURCES += \
+        $$PWD/ResourceHandler/ImageCollection/ImageCollectionHandler.cpp \
+        $$PWD/ResourceHandler/ImageCollection/ImageCollectionHandlerFactory.cpp
+
+    HEADERS += \
+        $$PWD/ResourceHandler/ImageCollection/ImageCollectionHandler.h \
+        $$PWD/ResourceHandler/ImageCollection/ImageCollectionHandlerFactory.h \
+
+}
+
 SOURCES += $$PWD/Devices/SocketDeviceHandler.cpp \
            $$PWD/ResourceHandler/SynchronizedList/SynchronizedListHandler.cpp \
            $$PWD/ResourceHandler/SynchronizedList/SynchronizedListHandlerFactory.cpp \
@@ -16,9 +28,7 @@ SOURCES += $$PWD/Devices/SocketDeviceHandler.cpp \
            $$PWD/Devices/DeviceHandleHandler.cpp \
            $$PWD/Devices/DeviceHandleHandlerFactory.cpp \
            $$PWD/Devices/SocketDevice.cpp \
-    $$PWD/ResourceHandler/ImageCollection/ImageCollectionHandler.cpp \
-    $$PWD/ResourceHandler/ImageCollection/ImageCollectionHandlerFactory.cpp \
-    $$PWD/Services/ServiceRequestHandler.cpp
+           $$PWD/Services/ServiceRequestHandler.cpp
 
 HEADERS +=  $$PWD/SocketCore/SocketResourceManager.h \
             $$PWD/SocketServer.h \
@@ -40,10 +50,8 @@ HEADERS +=  $$PWD/SocketCore/SocketResourceManager.h \
             $$PWD/Devices/DeviceHandleHandler.h \
             $$PWD/Devices/DeviceHandleHandlerFactory.h \
             $$PWD/Devices/SocketDevice.h \
-    $$PWD/ResourceHandler/ImageCollection/ImageCollectionHandler.h \
-    $$PWD/ResourceHandler/ImageCollection/ImageCollectionHandlerFactory.h \
-    $$PWD/ResourceHandler/Services/ServiceHandlerFactory.h \
-    $$PWD/Services/ServiceRequestHandler.h
+            $$PWD/ResourceHandler/Services/ServiceHandlerFactory.h \
+            $$PWD/Services/ServiceRequestHandler.h
 
 
 INCLUDEPATH += $$PWD

@@ -1,4 +1,4 @@
-QT += core websockets concurrent gui
+QT += core websockets concurrent
 
 CONFIG += c++11
 INCLUDEPATH += src
@@ -14,19 +14,20 @@ versionAtLeast(QT_VERSION, 5.14.0){
 }
 
 !contains(DEFINES, NO_GUI) {
-	QT += gui
 
-	SOURCES += \
-		$$PWD/src/Server/Resources/ImageResource/ImageResource.cpp \
-		$$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.cpp \
-		$$PWD/src/Storage/ImageResourceFilesystemStorage.cpp
+QT += gui
 
-	HEADERS += \
-		$$PWD/src/Server/Resources/ImageResource/ImageResource.h \
-		$$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.h \
-		$$PWD/src/Server/Resources/ImageResource/IImageResourceStorage.h \
-		$$PWD/src/Server/Resources/ImageResource/IImageResourceStorageFactory.h \
-		$$PWD/src/Storage/ImageResourceFilesystemStorage.h
+SOURCES += \
+	$$PWD/src/Server/Resources/ImageResource/ImageResource.cpp \
+	$$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.cpp \
+	$$PWD/src/Storage/ImageResourceFilesystemStorage.cpp
+
+HEADERS += \
+	$$PWD/src/Server/Resources/ImageResource/ImageResource.h \
+	$$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.h \
+	$$PWD/src/Server/Resources/ImageResource/IImageResourceStorage.h \
+	$$PWD/src/Server/Resources/ImageResource/IImageResourceStorageFactory.h \
+	$$PWD/src/Storage/ImageResourceFilesystemStorage.h
 }
 
 SOURCES += $$PWD/src/Server/Authentication/AuthentificationService.cpp \
