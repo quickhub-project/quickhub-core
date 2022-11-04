@@ -31,7 +31,10 @@ bool QObjectListResource::appendObject(QObject *object)
     }
 
     connect(object, &QObject::destroyed, this, &QObjectListResource::objectDestroyed);
-    object->setProperty("uuid", QUuid::createUuid().toString(QUuid::WithoutBraces));
+	
+	// setProperty can't be called on an object living in another thread
+	QMetaObject::invokeMethod(object, [=](){object->setProperty("uuid", QUuid::createUuid().toString(QUuid::WithoutBraces));});
+	
     _items.append(object);
     connectObject(object);
     Q_EMIT itemInserted(toVariant(object), _items.count()-1, iUserPtr());
