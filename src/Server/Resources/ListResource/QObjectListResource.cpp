@@ -77,14 +77,10 @@ QVariantList QObjectListResource::getListData() const
 
 QVariant QObjectListResource::getItem(int idx, QString uuid) const
 {
-    if(idx < 0 || idx >= _items.count())
-        return QVariant();
 
-    QObject* item = _items.at(idx);
-    if(!uuid.isEmpty() && item->property("uuid") != uuid)
-        return QVariant();
-
-    return toVariant(item);
+	QObject* object = getObject(idx, uuid);
+	
+    return toVariant(object);
 }
 
 IResource::ModificationResult QObjectListResource::setProperty(QString property, QVariant data, int index, QString uuid, QString token)
@@ -122,9 +118,26 @@ IResource::ModificationResult QObjectListResource::setProperty(QString property,
     return result;
 }
 
-QList<QObject *> QObjectListResource::getObjects()
+QList<QObject *> QObjectListResource::getObjects() const
 {
-    return _items;
+	return _items;
+}
+
+QObject *QObjectListResource::getObject(int idx, QString uuid) const
+{
+	if(idx < 0 || idx >= _items.count())
+        return nullptr;
+
+   QObject* item = _items.at(idx);
+	if(!uuid.isEmpty())
+	{
+		 if(item->property("uuid") == uuid)
+			 return item;
+		 else 
+			 return nullptr;
+	}
+	
+	return item;
 }
 
 void QObjectListResource::init(QObject *firstObject)
@@ -179,6 +192,9 @@ void QObjectListResource::disconnectObject(QObject *object)
 
 QVariantMap QObjectListResource::toVariant(QObject *object) const
 {
+	if(object == nullptr)
+		return QVariantMap();
+	
     QVariantMap variant;
     QMapIterator<QString, QMetaProperty> it(_propertiesByName);
     while(it.hasNext())

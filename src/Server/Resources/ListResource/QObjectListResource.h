@@ -19,9 +19,10 @@ public:
     virtual int                     getCount() const override;
     virtual QVariantMap             getMetadata() const override;
     virtual QVariantList            getListData() const override;
-    QVariant                        getItem(int idx, QString uuid) const override;
+    QVariant                        getItem(int idx, QString uuid = "") const override;
     virtual ModificationResult      setProperty(QString property, QVariant data, int index, QString uuid, QString token) override;
-    QList<QObject*>                 getObjects();
+    QList<QObject*>                 getObjects() const;
+	QObject*						getObject(int idx, QString uuid = "") const;
 
 protected: 
     QVariantMap                     toVariant(QObject* object) const;
