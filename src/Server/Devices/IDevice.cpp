@@ -42,6 +42,7 @@ IDevice::DeviceError IDevice::initDevice(QVariantMap properties)
     QMapIterator<QString, QVariant> it(properties);
     while(it.hasNext())
     {
+        it.next();
         DeviceError returnError = setDeviceProperty(it.key(), it.value());
         if(returnError != IDevice::NO_ERROR)
             return returnError;
