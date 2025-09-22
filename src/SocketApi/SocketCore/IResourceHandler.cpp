@@ -157,6 +157,7 @@ void IResourceHandler::handleError(QString command, IResource::ResourceError err
         case IResource::INVALID_PARAMETERS :errorString = "Invalid or missing parameters"; break;
         case IResource::STORAGE_ERROR :errorString = "Storage error"; break;
         case IResource::UNKNOWN_ERROR : errorString = "Unknown error"; break;
+        case IResource::NOT_SUPPORTED : errorString = "Not supported"; break;
     }
 
     answer["errorstring"] = errorString;
