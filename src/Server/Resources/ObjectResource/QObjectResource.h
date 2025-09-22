@@ -10,6 +10,7 @@
 #include "ObjectResource.h"
 #include <QMetaMethod>
 #include <QObject>
+#include <QSharedPointer>
 
 class QObjectResource : public ObjectResource
 {
@@ -17,13 +18,15 @@ class QObjectResource : public ObjectResource
 
 public:
     QObjectResource(QObject* object, QObject* parent = nullptr);
-    bool initObject(QObject* object);
+    QObjectResource(QSharedPointer<QObject> object, QObject* parent = nullptr);
     virtual ModificationResult  setProperty(QString name, const QVariant &value, QString token) override;
     virtual QVariantMap         getObjectData() const override;
 
 private:
+    bool                            initObject(QObject* object);
     QVariantMap                     toVariant(QObject* object) const;
     QObject*                        _object;
+    QSharedPointer<QObject>         _objectPtr;
     QMetaMethod                     _changedSlot;
     QMap<int, QMetaProperty>        _propertiesByIndex;
     QMap<QString, QMetaProperty>    _propertiesByName;

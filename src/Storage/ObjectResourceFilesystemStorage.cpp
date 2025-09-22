@@ -10,6 +10,7 @@
 #include <QDir>
 #include "FileSystemPaths.h"
 
+
 ObjectResourceFilesystemStorage::ObjectResourceFilesystemStorage(QString qualifiedResourceName, QObject *parent):
     IObjectResourceStorage(parent),
     _file(FileSystemPaths::instance()->getStoragePath()+qualifiedResourceName+".json"),

@@ -271,7 +271,7 @@ IDevice::DeviceError DeviceHandle::triggerFunction(QString name, QVariant parame
 {
     bool canCall = true;
     _lock.lockForRead();
-    if(!_permissionChecker.isNull())
+    if(!token.isEmpty() && !_permissionChecker.isNull())
         canCall = _permissionChecker->checkRPCPermission(token, this, name);
     _lock.unlock();
 
