@@ -23,5 +23,5 @@ void AutomationRule::setRuleName(const QString &ruleName)
 
 QQmlListProperty<QObject> AutomationRule::children()
 {
-    return QQmlListProperty<QObject>(this, _children);
+    return QQmlListProperty<QObject>(this, &_children);
 }
