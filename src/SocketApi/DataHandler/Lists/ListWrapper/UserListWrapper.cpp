@@ -6,6 +6,7 @@
 
 #include "UserListWrapper.h"
 #include <QDebug>
+#include <algorithm>
 
 
 UserListWrapper::UserListWrapper(QObject *parent) : IList(parent)
@@ -70,7 +71,7 @@ int UserListWrapper::getIndex(QString uuid) const
         return -1;
 
     QList<QString> keys = _userVariants.keys();
-    auto i = qBinaryFind(keys.begin(), keys.end(), uuid);
+    auto i = std::lower_bound(keys.begin(), keys.end(), uuid);
     return i - keys.begin();
 }
 
