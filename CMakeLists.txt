@@ -20,7 +20,7 @@ cmake_minimum_required(VERSION 3.26)
 
 project(quickhub-core VERSION 0.1.0 LANGUAGES CXX)
 
-find_package(Qt6 REQUIRED COMPONENTS Core WebSockets Concurrent Gui)
+find_package(Qt6 REQUIRED COMPONENTS Core WebSockets Concurrent Gui Qml)
 
 qt_standard_project_setup()
 
@@ -50,6 +50,7 @@ set(CORE_SOURCES
     src/Server/Authentication/IUser.h
     src/Server/Authentication/User.cpp
     src/Server/Authentication/User.h
+    src/Server/Automation/AutomationEngine.cpp
     src/Server/Automation/AutomationEngine.h
     src/Server/Automation/QmlComponents/AutomationRule.cpp
     src/Server/Automation/QmlComponents/AutomationRule.h
@@ -122,6 +123,7 @@ set(CORE_SOURCES
     src/SocketApi/Devices/SocketDevice.h
     src/SocketApi/Devices/SocketDeviceHandler.cpp
     src/SocketApi/Devices/SocketDeviceHandler.h
+    src/SocketApi/ResourceHandler/Services/ServiceHandlerFactory.cpp
     src/SocketApi/ResourceHandler/Services/ServiceHandlerFactory.h
     src/SocketApi/ResourceHandler/SynchronizedList/SynchronizedListHandler.cpp
     src/SocketApi/ResourceHandler/SynchronizedList/SynchronizedListHandler.h
@@ -159,7 +161,7 @@ set(CORE_SOURCES
 
 # GUI-dependent sources
 if(NOT QH_NO_GUI)
-    list(APPEND CORE_SOURCES
+  list(APPEND CORE_SOURCES
         src/Server/Resources/ImageResource/IImageResourceStorage.h
         src/Server/Resources/ImageResource/IImageResourceStorageFactory.h
         src/Server/Resources/ImageResource/ImageResource.cpp
@@ -175,7 +177,7 @@ if(NOT QH_NO_GUI)
     )
 endif()
 
-qt_add_library(QHCore MODULE
+qt_add_library(QHCore SHARED
     ${CORE_SOURCES}
 )
 
@@ -185,16 +187,16 @@ target_compile_definitions(QHCore PRIVATE
 )
 
 if(QH_NO_GUI)
-    target_compile_definitions(QHCore PRIVATE NO_GUI)
+  target_compile_definitions(QHCore PRIVATE NO_GUI)
 endif()
 
 # Handle version-specific defines for Qt
 if(Qt6_VERSION VERSION_GREATER_EQUAL 5.14.0)
-    target_compile_definitions(QHCore PRIVATE
+  target_compile_definitions(QHCore PRIVATE
         SKIP_EMPTY_PARTS=Qt::SkipEmptyParts
     )
 else()
-    target_compile_definitions(QHCore PRIVATE
+  target_compile_definitions(QHCore PRIVATE
         SKIP_EMPTY_PARTS=QString::SkipEmptyParts
     )
 endif()
@@ -202,12 +204,13 @@ endif()
 target_link_libraries(QHCore PRIVATE
     Qt6::Core
     Qt6::WebSockets
+    Qt6::Qml
     Qt6::Concurrent
     QHPluginSystem
 )
 
 if(NOT QH_NO_GUI)
-    target_link_libraries(QHCore PRIVATE Qt6::Gui)
+  target_link_libraries(QHCore PRIVATE Qt6::Gui)
 endif()
 
 target_include_directories(QHCore PUBLIC
