@@ -337,7 +337,8 @@ void DeviceManager::loadMappings()
 void DeviceManager::loadHandles()
 {
     // load only handles for Devices which have a mapping
-    QSet<QString> registeredDeviceUuids = _deviceMappings.values().toSet();
+    QList<QString> values = _deviceMappings.values();
+    QSet<QString> registeredDeviceUuids(values.begin(), values.end());
     QSetIterator<QString> it(registeredDeviceUuids);
     while(it.hasNext())
     {
