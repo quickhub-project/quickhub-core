@@ -7,7 +7,6 @@
 
 #include "IResourceHandler.h"
 #include "Server/Authentication/AuthentificationService.h"
-#include "Server/Authentication/User.h"
 #include <QUuid>
 int IResourceHandler::instanceCount = 0;
 IResourceHandler::IResourceHandler(QString resourceType, QObject *parent) : QObject(parent)
@@ -157,6 +156,7 @@ void IResourceHandler::handleError(QString command, IResource::ResourceError err
         case IResource::INVALID_PARAMETERS :errorString = "Invalid or missing parameters"; break;
         case IResource::STORAGE_ERROR :errorString = "Storage error"; break;
         case IResource::UNKNOWN_ERROR : errorString = "Unknown error"; break;
+        case IResource::NOT_SUPPORTED : errorString = "Not supported"; break;
     }
 
     answer["errorstring"] = errorString;
