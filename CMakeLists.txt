@@ -155,6 +155,10 @@ set(CORE_SOURCES
     src/Storage/ListResourceTemporaryStorage.h
     src/Storage/ObjectResourceFilesystemStorage.cpp
     src/Storage/ObjectResourceFilesystemStorage.h
+    src/Storage/QObjectResourceFilesystemStorage.cpp
+    src/Storage/QObjectResourceFilesystemStorage.h
+    src/Storage/QObjectSerializer.cpp
+    src/Storage/QObjectSerializer.h
 )
 
 # GUI-dependent sources

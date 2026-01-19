@@ -18,7 +18,7 @@ QVariantMap serialize(const QObject *object, int childDepth, bool includeReadOnl
 {
     QVariantMap data;
     if(!object)
-        return data;
+    {return data;}
     // Properties.
     const QMetaObject *metaObject = object->metaObject();
     int propertyCount = metaObject->propertyCount();
@@ -37,7 +37,9 @@ QVariantMap serialize(const QObject *object, int childDepth, bool includeReadOnl
     // Children.
     if(childDepth == -1 || childDepth > 0) {
         if(childDepth > 0)
+        {
             --childDepth;
+        }
         foreach(QObject *child, object->children()) {
             const QByteArray className(child->metaObject()->className());
             addMappedData(data, className, serialize(child, childDepth, includeReadOnlyProperties));
@@ -74,7 +76,7 @@ void addMappedData(QVariantMap &data, const QByteArray &key, const QVariant &val
         if(data.contains(key)) {
             // If data already contains key, make sure key's value is a list and append the input value.
             QVariant &existingData = data[key];
-            if(existingData.type() == QVariant::List) {
+            if(existingData.metaType().id() == QMetaType::QVariantList) {
                 QVariantList values = existingData.toList();
                 values.append(value);
                 data[key] = values;
@@ -93,9 +95,11 @@ void addMappedData(QVariantMap &data, const QByteArray &key, const QVariant &val
 void deserialize(QObject *object, const QVariantMap &data, ObjectFactory *factory)
 {
     if(!object)
+    {
         return;
+    }
     for(QVariantMap::const_iterator i = data.constBegin(); i != data.constEnd(); ++i) {
-        if(i.value().type() == QVariant::Map) {
+        if(i.value().metaType().id() == QMetaType::QVariantMap) {
             // Child object.
             QByteArray className = i.key().toUtf8();
             const QVariantMap &childData = i.value().toMap();
@@ -122,17 +126,21 @@ void deserialize(QObject *object, const QVariantMap &data, ObjectFactory *factor
             }
             // If we still have not found an existing child, attempt to create one dynamically.
             if(!childFound) {
-                QObject *child = NULL;
+                QObject *child = nullptr;
                 if(className == QByteArray("QObject"))
+                {
                     child = new QObject;
+                }
                 else if(factory && factory->hasCreator(className))
+                {
                     child = factory->create(className);
+                }
                 if(child) {
                     child->setParent(object);
                     deserialize(child, childData, factory);
                 }
             }
-        } else if(i.value().type() == QVariant::List) {
+        } else if(i.value().metaType().id() == QMetaType::QVariantList) {
             // List of child objects and/or properties.
             QByteArray className = i.key().toUtf8();
             const QVariantList &childDataList = i.value().toList();
@@ -142,13 +150,17 @@ void deserialize(QObject *object, const QVariantMap &data, ObjectFactory *factor
             foreach(QObject *child, object->children()) {
                 if(className == QByteArray(child->metaObject()->className())) {
                     if(!child->objectName().isEmpty())
+                    {
                         existingChildrenWithClassNameAndObjectName.append(child);
+                    }
                     else
+                    {
                         existingChildrenWithClassName.append(child);
+                    }
                 }
             }
             for(QVariantList::const_iterator j = childDataList.constBegin(); j != childDataList.constEnd(); ++j) {
-                if(j->type() == QVariant::Map) {
+                if(j->metaType().id() == QMetaType::QVariantMap) {
                     // Child object.
                     const QVariantMap &childData = j->toMap();
                     bool childFound = false;
@@ -175,7 +187,7 @@ void deserialize(QObject *object, const QVariantMap &data, ObjectFactory *factor
                     }
                     // If we still havent found an existing child, attempt to create one dynamically.
                     if(!childFound) {
-                        QObject *child = NULL;
+                        QObject *child = nullptr;
                         if(className == QByteArray("QObject"))
                             child = new QObject;
                         else if(factory && factory->hasCreator(className))
@@ -205,9 +217,9 @@ void deserialize(QList<QObject*> &objects, const QVariantList &data, ObjectFacto
 {
     int i = 0;
     for(QVariantList::const_iterator j = data.constBegin(); j != data.constEnd(); ++j) {
-        if(j->type() == QVariant::Map) {
+        if(j->metaType().id() == QMetaType::QVariantMap) {
             // Objects should be maps.
-            QObject *object = i < objects.size() ? objects[i] : NULL;
+            QObject *object = i < objects.size() ? objects[i] : nullptr;
             if(!object && factory) {
                 if(!objectCreatorKey.isEmpty()) {
                     object = factory->create(objectCreatorKey);
