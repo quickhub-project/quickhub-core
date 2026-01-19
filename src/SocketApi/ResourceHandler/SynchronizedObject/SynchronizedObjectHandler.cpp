@@ -7,7 +7,7 @@
 
 #include "SynchronizedObjectHandler.h"
 #include "Server/Authentication/User.h"
-
+#include <QMap>
 SynchronizedObjectHandler::SynchronizedObjectHandler(QSharedPointer<ObjectResource> resource) : IResourceHandler(resource->getResourceType(), resource.data()),
     _resource(resource)
 {
@@ -65,9 +65,13 @@ void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
     if(command == "object:property:set")
     {
         QString property = parameters["property"].toString();
+        QMap<QString,PropertyChangeEvent> events;
+        QObject tmp;
         disconnect(_resource.data(), &ObjectResource::propertyChanged, this, &SynchronizedObjectHandler::propertyChanged);
+        connect(_resource.data(), &ObjectResource::propertyChanged, &tmp, [&events](QString property, QVariant data, iIdentityPtr user){events.insert(property, PropertyChangeEvent{property, data, user});});
         ObjectResource::ModificationResult result = _resource->setProperty(property, data, token);
         connect(_resource.data(), &ObjectResource::propertyChanged, this, &SynchronizedObjectHandler::propertyChanged);
+        events.remove(property);
 
         parameters["data"] = result.data;
         msg["parameters"] = parameters;
@@ -76,14 +80,20 @@ void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
         if(result.error == ObjectResource::NO_ERROR)
         {
             deployToAll(msg, handle);
-            return;
+        }
+
+        for (auto [key, value] : events.asKeyValueRange()) {
+            qDebug()<<"Other Prop Changes:"<<value.property;
+            propertyChanged(value.property, value.data, value.user);
         }
     }
 
     if(command == "object:filter")
     {
         if(_resource->dynamicContent())
+        {
             _resource->setFilter(data.toMap());
+        }
     }
 }
 

@@ -18,6 +18,12 @@ class SynchronizedObjectHandler : public IResourceHandler
     Q_OBJECT
 
 public:
+    struct PropertyChangeEvent
+    {
+        QString property;
+        QVariant data;
+        iIdentityPtr user;
+    };
     explicit SynchronizedObjectHandler(QSharedPointer<ObjectResource> resource = QSharedPointer<ObjectResource> (nullptr));
     ~SynchronizedObjectHandler() override;
     void initHandle(ISocket* handle) override;
