@@ -39,8 +39,6 @@ set(CORE_SOURCES
     src/Connection/VirtualConnection.h
     src/Server/Authentication/AuthentificationService.cpp
     src/Server/Authentication/AuthentificationService.h
-    src/Server/Authentication/Controller.cpp
-    src/Server/Authentication/Controller.h
     src/Server/Authentication/DefaultAuthenticator.cpp
     src/Server/Authentication/DefaultAuthenticator.h
     src/Server/Authentication/IAuthenticator.h
