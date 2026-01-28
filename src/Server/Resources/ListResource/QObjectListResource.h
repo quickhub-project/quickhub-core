@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QMetaProperty>
 #include "ListResource.h"
+#include <QPointer>
 
 class QObjectListResource : public ListResource
 {
@@ -16,14 +17,14 @@ public:
 
     bool                            appendObject(QObject* object);
     bool                            removeObject(QObject* object);
+    QList<QObject*>                 getObjects() const;
     virtual int                     getCount() const override;
     virtual QVariantMap             getMetadata() const override;
     virtual QVariantList            getListData() const override;
     QVariant                        getItem(int idx, QString uuid = "") const override;
     virtual ModificationResult      setProperty(QString property, QVariant data, int index, QString uuid, QString token) override;
-    QList<QObject*>                 getObjects() const;
 	QObject*						getObject(int idx, QString uuid = "") const;
-
+    void                            setResourceProperties(QStringList properties);
 protected: 
     QVariantMap                     toVariant(QObject* object) const;
 
@@ -32,8 +33,9 @@ private:
     void                            connectObject(QObject* object);
     void                            disconnectObject(QObject* object);
 
+    QStringList                     _resourceProperties;
     bool                            _initialized = false;
-    QList<QObject*>                 _items;
+    QList<QPointer<QObject>>        _items;
     QMap<int, QMetaProperty>        _propertiesByIndex;
     QMap<QString, QMetaProperty>    _propertiesByName;
     QMetaMethod                     _changedSlot;

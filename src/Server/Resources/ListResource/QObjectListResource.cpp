@@ -13,7 +13,9 @@ QObjectListResource::QObjectListResource(QList<QObject*> objects, QObject *paren
 {
     QListIterator<QObject*> it(objects);
     while(it.hasNext())
+    {
         appendObject(it.next());
+    }
 }
 
 bool QObjectListResource::appendObject(QObject *object)
@@ -29,8 +31,6 @@ bool QObjectListResource::appendObject(QObject *object)
         qWarning()<<Q_FUNC_INFO<<": Inserted object must be an instance of " << _className;
         return false;
     }
-
-    connect(object, &QObject::destroyed, this, &QObjectListResource::objectDestroyed);
 	
 	// setProperty can't be called on an object living in another thread
 	QMetaObject::invokeMethod(object, [=](){object->setProperty("uuid", QUuid::createUuid().toString(QUuid::WithoutBraces));});
@@ -45,13 +45,16 @@ bool QObjectListResource::removeObject(QObject *object)
 {
     int idx = _items.indexOf(object);
     if(idx < 0)
+    {
         return false;
+    }
 
     _items.removeAll(object);
     disconnectObject(object);
     Q_EMIT itemRemoved(idx, object->property("uuid").toString(), iUserPtr());
     return true;
 }
+
 
 int QObjectListResource::getCount() const
 {
@@ -66,7 +69,7 @@ QVariantMap QObjectListResource::getMetadata() const
 QVariantList QObjectListResource::getListData() const
 {
     QVariantList list;
-    QListIterator<QObject*> it(_items);
+    QListIterator<QPointer<QObject>> it(_items);
     while(it.hasNext())
     {
         list << toVariant(it.next());
@@ -120,7 +123,11 @@ IResource::ModificationResult QObjectListResource::setProperty(QString property,
 
 QList<QObject *> QObjectListResource::getObjects() const
 {
-	return _items;
+    QList<QObject *> objects;
+    foreach (QPointer<QObject> item, _items) {
+        objects << item;
+    }
+    return objects;
 }
 
 QObject *QObjectListResource::getObject(int idx, QString uuid) const
@@ -140,19 +147,30 @@ QObject *QObjectListResource::getObject(int idx, QString uuid) const
 	return item;
 }
 
+void QObjectListResource::setResourceProperties(QStringList properties)
+{
+    _resourceProperties = properties;
+}
+
 void QObjectListResource::init(QObject *firstObject)
 {
     if(_initialized)
+    {
         return;
+    }
 
     _changedSlot = metaObject()->method(metaObject()->indexOfSlot("objectPropertyChanged()"));
     auto metaObject = firstObject->metaObject();
     _className = metaObject->className();
-    for(int i = metaObject->propertyOffset(); i < metaObject->propertyCount(); i++)
+    for(int i = 1; i < metaObject->propertyCount(); i++)
     {
         auto property = metaObject->property(i);
-        _propertiesByIndex.insert(property.notifySignalIndex(),property);
-        _propertiesByName.insert(property.name(), property);
+        QString name = property.name();
+        if(_resourceProperties.isEmpty() || _resourceProperties.contains(name))
+        {
+            _propertiesByIndex.insert(property.notifySignalIndex(),property);
+            _propertiesByName.insert(name, property);
+        }
         _initialized = true;
     }
 }
@@ -160,15 +178,18 @@ void QObjectListResource::init(QObject *firstObject)
 void QObjectListResource::connectObject(QObject *object)
 {
     if(!_initialized)
+    {
         init(object);
+    }
 
+    connect(object, &QObject::destroyed, this, &QObjectListResource::objectDestroyed, Qt::UniqueConnection);
     QMapIterator<QString, QMetaProperty> it(_propertiesByName);
     while(it.hasNext())
     {
         auto property = it.next();
         if(property.value().hasNotifySignal())
         {
-            QObject::connect(object, property->notifySignal(), this, _changedSlot);
+            QObject::connect(object, property->notifySignal(), this, _changedSlot, Qt::UniqueConnection);
         }
     }
 }
@@ -176,8 +197,11 @@ void QObjectListResource::connectObject(QObject *object)
 void QObjectListResource::disconnectObject(QObject *object)
 {
     if(!_initialized)
+    {
         return;
+    }
 
+    disconnect(object, &QObject::destroyed, this, &QObjectListResource::objectDestroyed);
     QMapIterator<QString, QMetaProperty> it(_propertiesByName);
     while(it.hasNext())
     {
@@ -193,7 +217,9 @@ void QObjectListResource::disconnectObject(QObject *object)
 QVariantMap QObjectListResource::toVariant(QObject *object) const
 {
 	if(object == nullptr)
-		return QVariantMap();
+    {
+        return QVariantMap();
+    }
 	
     QVariantMap variant;
     QMapIterator<QString, QMetaProperty> it(_propertiesByName);
@@ -216,7 +242,7 @@ void QObjectListResource::objectPropertyChanged()
 {
     int idx = senderSignalIndex();
     QMetaProperty property = _propertiesByIndex.value(idx);
-    auto object = sender();
+    auto* object = sender();
     if(!property.isValid() || nullptr == object)
         return;
 
@@ -231,7 +257,9 @@ void QObjectListResource::objectDestroyed(QObject *object)
 {
     int idx = _items.indexOf(object);
     if(idx < 0)
+    {
         return;
+    }
 
     _items.removeAll(object);
     Q_EMIT itemRemoved(idx, object->property("uuid").toString(), iUserPtr());

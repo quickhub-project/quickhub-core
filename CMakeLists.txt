@@ -79,6 +79,8 @@ set(CORE_SOURCES
     src/Server/Resources/ListResource/ListResource.h
     src/Server/Resources/ListResource/ListResourceFactory.cpp
     src/Server/Resources/ListResource/ListResourceFactory.h
+    src/Server/Resources/ListResource/SharedQObjectListResource.h
+    src/Server/Resources/ListResource/SharedQObjectListResource.cpp
     src/Server/Resources/ListResource/QObjectListResource.cpp
     src/Server/Resources/ListResource/QObjectListResource.h
     src/Server/Resources/ObjectResource/IObjectResourceStorage.h

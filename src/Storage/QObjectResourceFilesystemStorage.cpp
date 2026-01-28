@@ -66,7 +66,7 @@ void QObjectResourceFilesystemStorage::objectPropertyChanged()
 {
     int idx = senderSignalIndex();
     QMetaProperty property = _propertiesByIndex.value(idx);
-    auto object = sender();
+    auto* object = sender();
     if(!property.isValid() || nullptr == object)
         return;
 
