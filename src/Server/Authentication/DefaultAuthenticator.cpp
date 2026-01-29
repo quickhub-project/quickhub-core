@@ -74,7 +74,7 @@ void DefaultAuthenticator::init(QString userDataPath)
 
     while(it.hasNext())
     {
-        userPtr user(new User(it.next().toMap(), this));
+        userPtr user(new User(it.next().toMap()));
         addUser(user);
     }
 
