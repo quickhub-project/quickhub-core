@@ -18,11 +18,11 @@ public:
     bool                            appendObject(QObject* object);
     bool                            removeObject(QObject* object);
     QList<QObject*>                 getObjects() const;
-    virtual int                     getCount() const override;
-    virtual QVariantMap             getMetadata() const override;
-    virtual QVariantList            getListData() const override;
+    int                             getCount() const override;
+    QVariantMap                     getMetadata() const override;
+    QVariantList                    getListData() const override;
     QVariant                        getItem(int idx, QString uuid = "") const override;
-    virtual ModificationResult      setProperty(QString property, QVariant data, int index, QString uuid, QString token) override;
+    ModificationResult              setProperty(QString property, QVariant data, int index, QString uuid, QString token) override;
 	QObject*						getObject(int idx, QString uuid = "") const;
     void                            setResourceProperties(QStringList properties);
 protected: 
