@@ -4,75 +4,109 @@
  * It is part of the QuickHub framework - www.quickhub.org
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
-
 #include "DeviceHandle.h"
 #include "DeviceManager.h"
-#include "DeviceProperty.h"
-#include <QtDebug>
-#include <QDateTime>
 #include "DevicePermissionManager.h"
-#include <QWriteLocker>
-#include <QReadLocker>
+#include "DeviceProperty.h"
+
 #include "../Authentication/AuthentificationService.h"
 #include "../Authentication/IIdentitiy.h"
 
-DeviceHandle::DeviceHandle(QString uuid, QString path, QObject *parent) : IResource(path, parent),
-    _uuid(uuid),
-    _lock(QReadWriteLock::Recursive)
+#include <QDateTime>
+#include <QLoggingCategory>
+#include <QReadLocker>
+#include <QWriteLocker>
+
+// ----------------------------------------------------------------------------
+// Logging category
+// ----------------------------------------------------------------------------
+Q_LOGGING_CATEGORY(lcDeviceHandle, "quickhub.device.handle")
+
+// ----------------------------------------------------------------------------
+// Ctors / Dtor
+// ----------------------------------------------------------------------------
+DeviceHandle::DeviceHandle(QString uuid, QString path, DeviceManager *dm)
+    : IResource(path, nullptr),
+      _uuid(std::move(uuid)),
+      _lock(QReadWriteLock::Recursive),
+      _deviceManager(dm)
 {
-    connect(DeviceManager::instance(), &DeviceManager::deviceRegistered, this, &DeviceHandle::deviceRegistered);
-    connect(DeviceManager::instance(), &DeviceManager::deviceDeregistered, this, &DeviceHandle::deviceDeregistered);
-    iDevicePtr device = DeviceManager::instance()->getDeviceByUuid(_uuid);
-    // will be only the case in "set mapping" process in all other cases the device handle is
-    // created at application startup
-    if(device)
+    if (_deviceManager.isNull())
+    {
+        qCWarning(lcDeviceHandle) << "DeviceManager is null. Handle is inactive."
+                                  << "path:" << getResourcePath()
+                                  << "uuid:" << _uuid;
+        return;
+    }
+
+    connect(dm, &DeviceManager::deviceRegistered, this, &DeviceHandle::deviceRegistered);
+    connect(dm, &DeviceManager::deviceDeregistered, this, &DeviceHandle::deviceDeregistered);
+
+           // This is only expected during "set mapping". In all other cases, the handle is created at startup.
+    const iDevicePtr device = dm->getDeviceByUuid(_uuid);
+    if (device)
     {
         setPermissions(device->getRequestedPermissions());
         setDevice(device);
     }
     else
+    {
+        qCInfo(lcDeviceHandle) << "No live device for UUID, loading persisted state."
+                               << "uuid:" << _uuid
+                               << "path:" << getResourcePath();
         loadLastData();
+    }
 }
 
-DeviceHandle::DeviceHandle(QString path, QObject *parent): IResource(path, parent),
-    _temporary(true),
-    _lock()
+DeviceHandle::DeviceHandle(QString path, DeviceManager *dm)
+    : IResource(std::move(path), nullptr),
+      _temporary(true),
+      _lock(QReadWriteLock::Recursive),
+      _deviceManager(dm)
 {
-    connect(DeviceManager::instance(), &DeviceManager::deviceRegistered, this, &DeviceHandle::deviceRegistered);
-    connect(DeviceManager::instance(), &DeviceManager::deviceDeregistered, this, &DeviceHandle::deviceDeregistered);
+    if (_deviceManager.isNull())
+    {
+        qCWarning(lcDeviceHandle) << "DeviceManager is null. Handle is inactive."
+                                  << "path:" << getResourcePath();
+        return;
+    }
+
+    connect(dm, &DeviceManager::deviceRegistered, this, &DeviceHandle::deviceRegistered);
+    connect(dm, &DeviceManager::deviceDeregistered, this, &DeviceHandle::deviceDeregistered);
 }
 
 DeviceHandle::~DeviceHandle()
 {
-    qDebug()<< "Device-Handle Destroyed for: " + getResourcePath() + ( !_uuid.isEmpty() ? "/"+ _uuid : "") ;
-    QReadLocker locker(&_lock);
-    if(!_temporary)
+    qCDebug(lcDeviceHandle) << "Destroy handle."
+                            << "path:" << getResourcePath()
+                            << "uuid:" << (_uuid.isEmpty() ? QStringLiteral("<none>") : _uuid);
+
+           // Persist only for non-temporary handles.
     {
-       locker.unlock();
-       save();
+        QReadLocker locker(&_lock);
+        if (_temporary)
+            return;
     }
+
+    save();
 }
 
+// ----------------------------------------------------------------------------
+// Serialization
+// ----------------------------------------------------------------------------
 const QVariantMap DeviceHandle::getData()
 {
     QVariantMap data;
     QVariantMap properties;
-
-    _lock.lockForRead();
-    QMapIterator<QString, DeviceProperty*> propIt(_properties);
-    while(propIt.hasNext())
-    {
-        propIt.next();
-        properties.insert(propIt.key(), propIt.value()->toMap());
-    }
-
-    QMapIterator<QString, bool> permIt(_permissions);
     QVariantMap permissions;
-    while(permIt.hasNext())
-    {
-        permIt.next();
-        permissions.insert(permIt.key(), permIt.value());
-    }
+
+    QReadLocker locker(&_lock);
+
+    for (auto it = _properties.cbegin(); it != _properties.cend(); ++it)
+        properties.insert(it.key(), it.value()->toMap());
+
+    for (auto it = _permissions.cbegin(); it != _permissions.cend(); ++it)
+        permissions.insert(it.key(), it.value());
 
     data["properties"] = properties;
     data["functions"] = _functions;
@@ -83,30 +117,46 @@ const QVariantMap DeviceHandle::getData()
     data["enableauthkey"] = _enableSecureCheck;
     data["shortID"] = _shortID;
     data["permissions"] = permissions;
-    _lock.unlock();
+
     return data;
 }
 
+// ----------------------------------------------------------------------------
+// Basic setters / getters
+// ----------------------------------------------------------------------------
 void DeviceHandle::setUuid(QString uuid)
 {
-    if(uuid == _uuid)
+    if (uuid == _uuid)
         return;
 
-    _lock.lockForWrite();
-    _initialized = false;
-    _uuid = uuid;
-    _lock.unlock();
-    Q_EMIT uuidChanged(uuid);
+    {
+        QWriteLocker locker(&_lock);
+        _initialized = false;
+        _uuid = std::move(uuid);
+    }
+
+    qCDebug(lcDeviceHandle) << "UUID changed."
+                            << "uuid:" << _uuid
+                            << "path:" << getResourcePath();
+
+    Q_EMIT uuidChanged(_uuid);
 }
 
 void DeviceHandle::setDescription(QString description, QString token)
 {
     Q_UNUSED(token)
-    _lock.lockForWrite();
-    _description = description;
-    _lock.unlock();
+
+    {
+        QWriteLocker locker(&_lock);
+        _description = std::move(description);
+    }
+
+    qCInfo(lcDeviceHandle) << "Description updated."
+                           << "uuid:" << _uuid
+                           << "path:" << getResourcePath();
+
     save();
-    Q_EMIT descriptionChanged(_uuid, description);
+    Q_EMIT descriptionChanged(_uuid, _description);
 }
 
 qint64 DeviceHandle::lastAccess() const
@@ -132,123 +182,6 @@ QString DeviceHandle::getDescription() const
     return _description;
 }
 
-bool DeviceHandle::setDevice(QSharedPointer<IDevice> device)
-{
-    if(device == nullptr)
-        return false;
-
-    bool hasDevice = false;
-    QReadLocker locker(&_lock);
-    if(_device != nullptr)
-        hasDevice = true;
-
-    locker.unlock();
-    if(hasDevice)
-        removeDevice();
-
-    setUuid(device->uuid());
-    connect(device.data(), &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
-    connect(device.data(), &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
-    connect(device.data(), &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
-    connect(device.data(), &IDevice::forcePropertySync, this, &DeviceHandle::syncDevice);
-
-    _lock.lockForWrite();
-    _device = device;
-    _deviceSate = device->getDeviceState();
-    _firmwareVersion = device->getFirmwareVersion();
-    _temporary = false;
-    if(!_permissions.isEmpty())
-    {
-        _token = AuthenticationService::instance()->login(device);
-    }
-    else
-        _token = "";
-    _lock.unlock();
-
-    if(!_permissions.isEmpty())
-    {
-        device->setGrantedPermissions(_permissions);
-        device->setToken(_token);
-    }
-
-    Q_EMIT deviceStateChanged(_uuid, _deviceSate);
-    Q_EMIT temporaryChanged(_uuid, _temporary);
-    syncDevice();
-
-    bool emitInit = false;
-    _lock.lockForWrite();
-    if(!_initialized)
-    {
-        _initialized = true;
-        emitInit = true;
-    }
-    _lock.unlock();
-
-    if(emitInit)
-        Q_EMIT init();
-
-    save();
-    return true;
-}
-
-bool DeviceHandle::removeDevice()
-{
-    QReadLocker locker(&_lock);
-    if(_device == nullptr)
-        return false;
-    locker.unlock();
-
-    setUuid("");
-    disconnect(_device.data(), &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
-    disconnect(_device.data(), &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
-    disconnect(_device.data(), &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
-    disconnect(_device.data(), &IDevice::forcePropertySync, this, &DeviceHandle::syncDevice);
-    _lock.lockForWrite();
-    _deviceSate = IDevice::OFFLINE;
-    _temporary = true;
-    _device = nullptr;
-    _lock.unlock();
-    Q_EMIT deviceStateChanged(_uuid, _deviceSate);
-    Q_EMIT temporaryChanged(_uuid,true);
-    save();
-    return true;
-}
-
-bool DeviceHandle::temporary() const
-{
-    QReadLocker locker(&_lock);
-    return _temporary;
-}
-
-
-QVariantList DeviceHandle::getFunctions() const
-{
-    QReadLocker locker(&_lock);
-    return _functions;
-}
-
-IDevice::DeviceError DeviceHandle::setDeviceProperty(QString property, QVariant value, QString token)
-{
-    IDevicePermissionChecker::PropertyPermission permission;
-    _lock.lockForRead();
-    if(!_permissionChecker.isNull())
-        permission = _permissionChecker-> checkPropertyPermission(token, this, property);
-    _lock.unlock();
-
-    if(!permission.canWrite)
-        return IDevice::PERMISSION_DENIED;
-
-    _lock.lockForRead();
-    DeviceProperty* prop = _properties.value(property, nullptr);
-    _lock.unlock();
-
-    if(!prop)
-        return IDevice::PROPERTY_NOT_EXISTS;
-
-    prop->setValue(value);
-    return IDevice::NO_ERROR;
-}
-
 QString DeviceHandle::type() const
 {
     QReadLocker locker(&_lock);
@@ -267,24 +200,187 @@ QString DeviceHandle::shortUid() const
     return _shortID;
 }
 
+bool DeviceHandle::temporary() const
+{
+    QReadLocker locker(&_lock);
+    return _temporary;
+}
+
+QVariantList DeviceHandle::getFunctions() const
+{
+    QReadLocker locker(&_lock);
+    return _functions;
+}
+
+// ----------------------------------------------------------------------------
+// Device binding / unbinding
+// ----------------------------------------------------------------------------
+bool DeviceHandle::setDevice(QSharedPointer<IDevice> device)
+{
+    if (!device)
+        return false;
+
+           // Replace previous device (if any).
+    {
+        QReadLocker locker(&_lock);
+        if (_device)
+        {
+            locker.unlock();
+            removeDevice();
+        }
+    }
+
+    setUuid(device->uuid());
+
+    connect(device.data(), &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
+    connect(device.data(), &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
+    connect(device.data(), &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
+    connect(device.data(), &IDevice::forcePropertySync, this, &DeviceHandle::syncDevice);
+
+    QString token;
+    {
+        QWriteLocker locker(&_lock);
+        _device = device;
+        _deviceSate = device->getDeviceState();
+        _firmwareVersion = device->getFirmwareVersion();
+        _temporary = false;
+
+               // Only authenticate if permissions are used.
+        token = _permissions.isEmpty() ? QString() : AuthenticationService::instance()->login(device);
+        _token = token;
+    }
+
+    if (!_permissions.isEmpty())
+    {
+        device->setGrantedPermissions(_permissions);
+        device->setToken(token);
+    }
+
+    qCInfo(lcDeviceHandle) << "Device attached."
+                           << "uuid:" << _uuid
+                           << "state:" << _deviceSate
+                           << "temporary:" << _temporary;
+
+    Q_EMIT deviceStateChanged(_uuid, _deviceSate);
+    Q_EMIT temporaryChanged(_uuid, _temporary);
+
+    syncDevice();
+
+    bool emitInit = false;
+    {
+        QWriteLocker locker(&_lock);
+        if (!_initialized)
+        {
+            _initialized = true;
+            emitInit = true;
+        }
+    }
+
+    if (emitInit)
+        Q_EMIT init();
+
+
+    save();
+    return true;
+}
+
+bool DeviceHandle::removeDevice()
+{
+    {
+        QReadLocker locker(&_lock);
+        if (!_device)
+            return false;
+    }
+
+    qCInfo(lcDeviceHandle) << "Device detached." << "uuid:" << _uuid;
+
+    setUuid("");
+
+    disconnect(_device.data(), &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
+    disconnect(_device.data(), &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
+    disconnect(_device.data(), &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
+    disconnect(_device.data(), &IDevice::forcePropertySync, this, &DeviceHandle::syncDevice);
+
+    {
+        QWriteLocker locker(&_lock);
+        _deviceSate = IDevice::OFFLINE;
+        _temporary = true;
+        _device = nullptr;
+    }
+
+    Q_EMIT deviceStateChanged(_uuid, _deviceSate);
+    Q_EMIT temporaryChanged(_uuid, true);
+
+    save();
+    return true;
+}
+
+// ----------------------------------------------------------------------------
+// Permissions / RPC / properties API
+// ----------------------------------------------------------------------------
+IDevice::DeviceError DeviceHandle::setDeviceProperty(QString property, QVariant value, QString token)
+{
+    IDevicePermissionChecker::PropertyPermission permission;
+    {
+        QReadLocker locker(&_lock);
+        if (!_permissionChecker.isNull())
+            permission = _permissionChecker->checkPropertyPermission(token, this, property);
+    }
+
+    if (!permission.canWrite)
+    {
+        qCWarning(lcDeviceHandle) << "Write denied."
+                                  << "uuid:" << _uuid
+                                  << "property:" << property;
+        return IDevice::PERMISSION_DENIED;
+    }
+
+    DeviceProperty* prop = nullptr;
+    {
+        QReadLocker locker(&_lock);
+        prop = _properties.value(property, nullptr);
+    }
+
+    if (!prop)
+        return IDevice::PROPERTY_NOT_EXISTS;
+
+    prop->setValue(std::move(value));
+    return IDevice::NO_ERROR;
+}
+
 IDevice::DeviceError DeviceHandle::triggerFunction(QString name, QVariant parameters, QString token, QString cbID)
 {
     bool canCall = true;
-    _lock.lockForRead();
-    if(!token.isEmpty() && !_permissionChecker.isNull())
-        canCall = _permissionChecker->checkRPCPermission(token, this, name);
-    _lock.unlock();
+    {
+        QReadLocker locker(&_lock);
+        if (!token.isEmpty() && !_permissionChecker.isNull())
+            canCall = _permissionChecker->checkRPCPermission(token, this, name);
+    }
 
-    if(!canCall)
+    if (!canCall)
+    {
+        qCWarning(lcDeviceHandle) << "RPC denied."
+                                  << "uuid:" << _uuid
+                                  << "rpc:" << name;
         return IDevice::PERMISSION_DENIED;
+    }
 
     QReadLocker locker(&_lock);
-    if(_deviceSate != IDevice::ONLINE)
+
+    if (_deviceSate != IDevice::ONLINE)
         return IDevice::DEVICE_NOT_AVAILABLE;
+
     QVariantMap paramMap = parameters.toMap();
-    iIdentityPtr identity  = AuthenticationService::instance()->validateToken(token);
-    if(!identity.isNull())
+
+           // Attach caller identity if token is valid.
+    const iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
+    if (!identity.isNull())
         paramMap["caller"] = identity.data()->identityID();
+
+    qCDebug(lcDeviceHandle) << "Trigger RPC."
+                            << "uuid:" << _uuid
+                            << "rpc:" << name
+                            << "cb:" << cbID;
 
     return _device->triggerFunction(name, paramMap, cbID);
 }
@@ -299,11 +395,10 @@ QVariantList DeviceHandle::properties() const
 {
     QVariantList properties;
     QReadLocker locker(&_lock);
-    QMapIterator<QString, DeviceProperty*> propIt(_properties);
-    while(propIt.hasNext())
-    {
-        properties <<  propIt.next().value()->toMap();
-    }
+
+    for (auto it = _properties.cbegin(); it != _properties.cend(); ++it)
+        properties << it.value()->toMap();
+
     return properties;
 }
 
@@ -315,7 +410,7 @@ DeviceProperty *DeviceHandle::property(QString name)
 
 DeviceProperty* DeviceHandle::createDevicePropertyObject(QString name, DeviceHandle *parent, QVariantMap metadata)
 {
-    DeviceProperty* prop = new DeviceProperty(name, parent, metadata);
+    auto* prop = new DeviceProperty(std::move(name), parent, std::move(metadata));
     connect(prop, &DeviceProperty::metadataChanged, this, &DeviceHandle::save);
     return prop;
 }
@@ -323,122 +418,158 @@ DeviceProperty* DeviceHandle::createDevicePropertyObject(QString name, DeviceHan
 QVariant DeviceHandle::getPropertyValue(QString name) const
 {
     QReadLocker locker(&_lock);
-    DeviceProperty* prop = _properties.value(name, nullptr);
-    if(prop == nullptr)
-        return QVariant(); //invalid
+    const DeviceProperty* prop = _properties.value(name, nullptr);
+    if (!prop)
+        return QVariant(); // invalid
 
     return prop->getValue();
 }
 
+// ----------------------------------------------------------------------------
+// Sync / persistence
+// ----------------------------------------------------------------------------
 void DeviceHandle::syncDevice()
 {
-    QReadLocker locker(&_lock);
-    if(_device == nullptr)
-        return;
-
-    QVariantMap newProperties = _device->getProperties();
-    locker.unlock();
-
-    QMapIterator<QString,QVariant> receivedPropertiesIt(newProperties);
-
-    QVariantMap _unconfirmedProperties;
-    while (receivedPropertiesIt.hasNext())
+    QVariantMap newProperties;
     {
-        receivedPropertiesIt.next();
-        QString key = receivedPropertiesIt.key();
-        QVariant val = receivedPropertiesIt.value();
-        _lock.lockForRead();
-        DeviceProperty* property = _properties.value(key, nullptr);
-        _lock.unlock();
-        if(property)
+        QReadLocker locker(&_lock);
+        if (!_device)
+            return;
+
+        newProperties = _device->getProperties();
+    }
+
+    QVariantMap unconfirmedProperties;
+
+    for (auto it = newProperties.cbegin(); it != newProperties.cend(); ++it)
+    {
+        const QString key = it.key();
+        const QVariant val = it.value();
+
+        DeviceProperty* property = nullptr;
         {
-            // These values come directly from the sensor after reattach. If there are shadowed values,
-            // then let the dirty flag as it is!
+            QReadLocker locker(&_lock);
+            property = _properties.value(key, nullptr);
+        }
+
+        if (property)
+        {
+            // Values come directly from the device after reattach. Keep "dirty" state unchanged.
             property->setRealValue(val, true);
         }
         else
         {
-             property = createDevicePropertyObject(key, this);// new DeviceProperty(key, this);
-             property->setRealValue(val);
-             registerPropertyObject(key, property);
+            property = createDevicePropertyObject(key, this);
+            property->setRealValue(val);
+            registerPropertyObject(key, property);
         }
 
-        _lock.lockForRead();
-        QMapIterator<QString, DeviceProperty*> it = _properties;
-
-        while(it.hasNext())
+               // Collect dirty values to re-apply on initDevice().
         {
-            if(it.next().value()->isDirty())
+            QReadLocker locker(&_lock);
+            for (auto pit = _properties.cbegin(); pit != _properties.cend(); ++pit)
             {
-                _unconfirmedProperties.insert(it.key(), it.value()->getSetValue());
+                if (pit.value()->isDirty())
+                    unconfirmedProperties.insert(pit.key(), pit.value()->getSetValue());
             }
         }
-        _lock.unlock();
+
         Q_EMIT propertyChanged(_uuid, key, val, false);
     }
-    _lock.lockForWrite();
-    _functions = _device->getFunctions();
-    _type = _device->type();
-    _permissionChecker = DevicePermissionManager::instance()->getDevicePermissionChecker(_type);
-    _shortID = _device->shortId();
-    _device->initDevice(_unconfirmedProperties);
-    _lock.unlock();
+
+    {
+        QWriteLocker locker(&_lock);
+
+        _functions = _device->getFunctions();
+        _type = _device->type();
+        _permissionChecker = DevicePermissionManager::instance()->getDevicePermissionChecker(_type);
+        _shortID = _device->shortId();
+
+        qCInfo(lcDeviceHandle) << "Synced device."
+                               << "uuid:" << _uuid
+                               << "type:" << _type
+                               << "props:" << newProperties.size()
+                               << "dirty:" << unconfirmedProperties.size();
+
+        _device->initDevice(unconfirmedProperties);
+    }
+
     save();
 }
 
 void DeviceHandle::loadLastData()
 {
-    QVariantMap data = load();
-    if(data.isEmpty())
-        return;
-
-
-     QVariantMap map = data["permissions"].toMap();
-     QMapIterator<QString, QVariant> it(map);
-     QMap<QString, bool> permissionMap;
-     while (it.hasNext())
-     {
-         it.next();
-          permissionMap.insert(it.key(), it.value().toBool());
-     }
-
-    _lock.lockForWrite();
-    _type = data["type"].toString();
-    _permissionChecker = DevicePermissionManager::instance()->getDevicePermissionChecker(_type);
-    _functions = data["functions"].toList();
-    _shortID = data["shortID"].toString();
-    _description = data["description"].toString();
-    _authentificationKey = data["authkey"].toUInt();
-    _enableSecureCheck = data["enableauthkey"].toBool();
-    _lastOnline = data["lastOnline"].toLongLong();
-    _permissions = permissionMap;
-    _lock.unlock();
-
-    QVariantMap properties = data["properties"].toMap();
-    QMapIterator<QString, QVariant> propIt(properties);
-
-    while (propIt.hasNext())
+    const QVariantMap data = load();
+    if (data.isEmpty())
     {
-        propIt.next();
-        DeviceProperty* prop = createDevicePropertyObject(propIt.key(), this,  propIt.value().toMap());//new DeviceProperty(propIt.key(), this,  propIt.value().toMap());
-        registerPropertyObject(propIt.key(), prop);
+        qCDebug(lcDeviceHandle) << "No persisted state found." << "path:" << getResourcePath();
+        return;
     }
 
+           // Permissions
+    QMap<QString, bool> permissionMap;
+    const QVariantMap map = data["permissions"].toMap();
+    for (auto it = map.cbegin(); it != map.cend(); ++it)
+        permissionMap.insert(it.key(), it.value().toBool());
+
+    {
+        QWriteLocker locker(&_lock);
+
+        _type = data["type"].toString();
+        _permissionChecker = DevicePermissionManager::instance()->getDevicePermissionChecker(_type);
+        _functions = data["functions"].toList();
+        _shortID = data["shortID"].toString();
+        _description = data["description"].toString();
+        _authentificationKey = data["authkey"].toUInt();
+        _enableSecureCheck = data["enableauthkey"].toBool();
+        _lastOnline = data["lastOnline"].toLongLong();
+        _permissions = permissionMap;
+    }
+
+           // Properties
+    const QVariantMap props = data["properties"].toMap();
+    for (auto it = props.cbegin(); it != props.cend(); ++it)
+    {
+        DeviceProperty* prop = createDevicePropertyObject(it.key(), this, it.value().toMap());
+        registerPropertyObject(it.key(), prop);
+    }
+
+    qCInfo(lcDeviceHandle) << "Loaded persisted state."
+                           << "type:" << _type
+                           << "props:" << props.size()
+                           << "permissions:" << _permissions.size();
 }
 
 void DeviceHandle::registerPropertyObject(QString name, DeviceProperty *prop)
 {
-    _lock.lockForWrite();
-    _properties.insert(name, prop);
-    _lock.unlock();
+    {
+        QWriteLocker locker(&_lock);
+        _properties.insert(name, prop);
+    }
+
     connect(prop, &DeviceProperty::setValueChanged, this, &DeviceHandle::sendPropertyToDevice);
     Q_EMIT newPropertyObject(prop);
 }
 
 void DeviceHandle::setPermissions(const QMap<QString, bool> &permissions)
 {
-    _permissions = permissions;
+    {
+        QWriteLocker locker(&_lock);
+        _permissions = permissions;
+    }
+
+    qCInfo(lcDeviceHandle) << "Permissions updated."
+                           << "uuid:" << _uuid
+                           << "count:" << _permissions.size();
+
     save();
+}
+
+QSharedPointer<IDevice> DeviceHandle::getDevice() const
+{
+    // Returning a shared pointer copy is thread-safe; keep state consistent under lock.
+    QReadLocker locker(&_lock);
+    return _device;
 }
 
 bool DeviceHandle::getEnableSecureCheck() const
@@ -449,25 +580,26 @@ bool DeviceHandle::getEnableSecureCheck() const
 
 IDevice::DeviceError DeviceHandle::startFirmwareUpdate(QVariant args)
 {
-    if(_device == nullptr)
+    QReadLocker locker(&_lock);
+    if (!_device)
         return IDevice::DEVICE_NOT_AVAILABLE;
 
-    return _device->startFirmwareUpdate(args);
+    qCInfo(lcDeviceHandle) << "Start firmware update." << "uuid:" << _uuid;
+    return _device->startFirmwareUpdate(std::move(args));
 }
 
 int DeviceHandle::getFirmwareVersion()
 {
+    QReadLocker locker(&_lock);
     return _firmwareVersion;
 }
 
 QVariantMap DeviceHandle::getPermissions()
 {
     QVariantMap map;
-    QMapIterator<QString, bool> it(_permissions);
-    while(it.hasNext()){
-        it.next();
+    QReadLocker locker(&_lock);
+    for (auto it = _permissions.cbegin(); it != _permissions.cend(); ++it)
         map.insert(it.key(), it.value());
-    }
     return map;
 }
 
@@ -479,41 +611,65 @@ quint32 DeviceHandle::getAuthentificationKey() const
 
 void DeviceHandle::setAuthentificationKey(const quint32 &securekey)
 {
-    _lock.lockForWrite();
-    _authentificationKey = securekey;
-    _enableSecureCheck = true;
-    _lock.unlock();
+    {
+        QWriteLocker locker(&_lock);
+        _authentificationKey = securekey;
+        _enableSecureCheck = true;
+    }
+
+    qCInfo(lcDeviceHandle) << "Authentication key updated." << "uuid:" << _uuid;
     save();
 }
 
-
+// ----------------------------------------------------------------------------
+// DeviceProperty -> Device forwarding
+// ----------------------------------------------------------------------------
 void DeviceHandle::sendPropertyToDevice(QString name, QVariant value)
 {
-    DeviceProperty* senderProp = qobject_cast<DeviceProperty*>(sender());
-    if(!senderProp)
+    const auto* senderProp = qobject_cast<DeviceProperty*>(sender());
+    if (!senderProp)
         return;
 
-    _lock.lockForRead();
-    iDevicePtr device = _device;
-    _lock.unlock();
-    if(device != nullptr)
+    iDevicePtr device;
     {
+        QReadLocker locker(&_lock);
+        device = _device;
+    }
+
+    if (device)
+    {
+        qCDebug(lcDeviceHandle) << "Forward property to device."
+                                << "uuid:" << _uuid
+                                << "property:" << name;
         device->setDeviceProperty(name, value);
     }
     else
     {
+        // No live device attached; persist shadow value.
+        qCDebug(lcDeviceHandle) << "No device attached, persisting property shadow."
+                                << "uuid:" << _uuid
+                                << "property:" << name;
         save();
     }
 
     Q_EMIT propertyChanged(_uuid, name, value, true);
 }
 
+// ----------------------------------------------------------------------------
+// Device lifecycle slots
+// ----------------------------------------------------------------------------
 void DeviceHandle::deviceStateChangedSlot(QString uuid, IDevice::DeviceState state)
 {
-    _lock.lockForWrite();
-    _deviceSate = state;
-    _lock.unlock();
-    if(state == IDevice::ONLINE)
+    {
+        QWriteLocker locker(&_lock);
+        _deviceSate = state;
+    }
+
+    qCInfo(lcDeviceHandle) << "Device state changed."
+                           << "uuid:" << uuid
+                           << "state:" << state;
+
+    if (state == IDevice::ONLINE)
         syncDevice();
 
     Q_EMIT deviceStateChanged(uuid, state);
@@ -521,80 +677,112 @@ void DeviceHandle::deviceStateChangedSlot(QString uuid, IDevice::DeviceState sta
 
 void DeviceHandle::deviceDeregistered(QString uuid)
 {
-    QReadLocker locker(&_lock);
-    if(uuid != _uuid || _device == nullptr)
-        return;
+    {
+        QReadLocker locker(&_lock);
+        if (uuid != _uuid || !_device)
+            return;
+    }
+
+    qCInfo(lcDeviceHandle) << "Device deregistered." << "uuid:" << uuid;
 
     disconnect(_device.data(), &IDevice::propertyChanged, this, &DeviceHandle::propertyChangedSlot);
     disconnect(_device.data(), &IDevice::dataReceived, this, &DeviceHandle::dataReceived);
     disconnect(_device.data(), &IDevice::deviceStateChanged, this, &DeviceHandle::deviceStateChangedSlot);
-    locker.unlock();
+
     save();
 
-    _lock.lockForWrite();
-    _lastOnline = QDateTime::currentMSecsSinceEpoch();
-    _deviceSate = IDevice::OFFLINE;
-    AuthenticationService::instance()->logout(_token);
-    _device = nullptr;
-    _lock.unlock();
+    {
+        QWriteLocker locker(&_lock);
+        _lastOnline = QDateTime::currentMSecsSinceEpoch();
+        _deviceSate = IDevice::OFFLINE;
+
+        AuthenticationService::instance()->logout(_token);
+
+        _device = nullptr;
+    }
+
     Q_EMIT deviceStateChanged(_uuid, IDevice::OFFLINE);
 }
 
 void DeviceHandle::deviceRegistered(QString uuid)
 {
-    QReadLocker locker(&_lock);
-    if(_device)
+    {
+        QReadLocker locker(&_lock);
+        if (_device)
+            return;
+    }
+
+    if (uuid != _uuid)
         return;
 
-    if(uuid == _uuid)
+    if (_deviceManager.isNull())
     {
-        locker.unlock();
-
-        iDevicePtr device = DeviceManager::instance()->getDeviceByUuid(uuid);
-        if(!device)
-            return;
-
-        locker.relock();
-        if(_enableSecureCheck)
-        {
-            if(_authentificationKey != device->getAuthentificationKey())
-            {
-                qWarning()<<"Wrong authentification key: "+_uuid+"! - Device rejected.";
-                qDebug()<< "IS:     "+QString::number(device->getAuthentificationKey());
-                qDebug()<< "SHOULD: "+QString::number(_authentificationKey);
-                return;
-            }
-
-            if(_permissions != device->getRequestedPermissions())
-            {
-                qWarning()<<"Unconfirmed permission request! "+_uuid+"! - Device rejected.";
-                return;
-            }
-
-            qDebug()<<"Check succeeded: "<<device->getAuthentificationKey();
-        }
-
-        locker.unlock();
-        setDevice(device);
+        qCWarning(lcDeviceHandle) << "DeviceManager is null. Abort attach."
+                                  << "uuid:" << uuid
+                                  << "path:" << getResourcePath();
+        return;
     }
+
+    qCInfo(lcDeviceHandle) << "Device registered, attempting attach." << "uuid:" << uuid;
+
+    const iDevicePtr device = _deviceManager->getDeviceByUuid(uuid);
+    if (!device)
+    {
+        qCWarning(lcDeviceHandle) << "Device registered but not retrievable by UUID."
+                                  << "uuid:" << uuid;
+        return;
+    }
+
+           // Optional secure check: validate authentication key and requested permissions.
+    {
+        QReadLocker locker(&_lock);
+        if (_enableSecureCheck)
+        {
+            if (_authentificationKey != device->getAuthentificationKey())
+            {
+                qCWarning(lcDeviceHandle) << "Authentication key mismatch; device rejected."
+                                          << "uuid:" << _uuid
+                                          << "is:" << device->getAuthentificationKey()
+                                          << "expected:" << _authentificationKey;
+                return;
+            }
+
+            if (_permissions != device->getRequestedPermissions())
+            {
+                qCWarning(lcDeviceHandle) << "Unconfirmed permission request; device rejected."
+                                          << "uuid:" << _uuid;
+                return;
+            }
+
+            qCInfo(lcDeviceHandle) << "Secure check succeeded." << "uuid:" << _uuid;
+        }
+    }
+
+    setDevice(device);
 }
 
+// ----------------------------------------------------------------------------
+// Device -> DeviceProperty updates
+// ----------------------------------------------------------------------------
 void DeviceHandle::propertyChangedSlot(QString uuid, QString property, QVariant value)
 {
     Q_UNUSED(uuid)
-    _lock.lockForRead();
-    DeviceProperty* prop = _properties.value(property, nullptr);
-    _lock.unlock();
 
-    if(prop)
+    DeviceProperty* prop = nullptr;
+    {
+        QReadLocker locker(&_lock);
+        prop = _properties.value(property, nullptr);
+    }
+
+    if (prop)
     {
         prop->setRealValue(value);
     }
     else
     {
-         prop = createDevicePropertyObject(property, this);// new DeviceProperty(property, this);
-         prop->setRealValue(value);
-         registerPropertyObject(property, prop);
+        prop = createDevicePropertyObject(property, this);
+        prop->setRealValue(value);
+        registerPropertyObject(property, prop);
     }
 
     Q_EMIT propertyChanged(_uuid, property, value, false);

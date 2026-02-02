@@ -29,7 +29,9 @@
 #include <QSharedPointer>
 #include "../Resources/ResourceManager/IResource.h"
 #include "QReadWriteLock"
+#include <QPointer>
 
+class DeviceManager;
 class DeviceProperty;
 class IDevicePermissionChecker;
 class DeviceHandle : public IResource
@@ -38,8 +40,8 @@ class DeviceHandle : public IResource
 
 public:    
     ~DeviceHandle();
-    explicit DeviceHandle(QString uuid, QString path, QObject *parent = nullptr);
-    explicit DeviceHandle(QString path, QObject *parent = nullptr);
+    explicit DeviceHandle(QString uuid, QString path, DeviceManager *dm);
+    explicit DeviceHandle(QString path, DeviceManager *dm);
 
     /*!
         \fn void DeviceHandle::setDescription(QString description, QString token = "")
@@ -196,6 +198,7 @@ public:
     QVariantMap                     getPermissions();
     void                            setPermissions(const QMap<QString, bool> &permissions);
 
+    QSharedPointer<IDevice>         getDevice() const;
 private:
     /*!
         These functions are overwritten from IResource and are for persistance purposes.
@@ -233,6 +236,8 @@ private:
     int                             _firmwareVersion;
     bool                            _enableSecureCheck = false;
     mutable QReadWriteLock          _lock;
+    QPointer<DeviceManager>         _deviceManager;
+
   QSharedPointer<IDevicePermissionChecker>      _permissionChecker;
 
 signals:
