@@ -18,9 +18,13 @@ class QHCorePlugin : public IPlugin
 
 public:
     QHCorePlugin(QObject* parent = 0);
+    ~QHCorePlugin();
     virtual bool init(QVariantMap parameters);
     virtual bool shutdown();
     virtual QString getPluginName();
+
+private:
+    QString _testDirPath;
 };
 
 #endif // QHCOREPLUGIN_H

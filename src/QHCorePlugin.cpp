@@ -23,10 +23,32 @@ QHCorePlugin::QHCorePlugin(QObject* parent) : IPlugin(parent)
 {
 }
 
+QHCorePlugin::~QHCorePlugin()
+{
+    if(_testDirPath.isEmpty()){
+        return;
+    }
+
+    QDir testDir(_testDirPath);
+    if(testDir.exists()){
+        testDir.removeRecursively();
+    }
+}
+
 bool QHCorePlugin::init(QVariantMap parameters)
 {
     int port = parameters.value("p", 4711).toInt();
-    QString path =  parameters.value("f", QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation).at(0)+"/v1.3/").toString();
+    QString path =  parameters.value("f", QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation).at(0)).toString();
+    if(parameters.contains("runtests")){
+        port = 4711;
+        path = path+="/tests/";
+        _testDirPath = path;
+        QDir testDir(_testDirPath);
+        if(testDir.exists()){
+            testDir.removeRecursively();
+        }
+    }
+
     ServiceManager::instance()->registerService(new DeviceService(this));
     SocketServer::instance()->start(path, static_cast<quint16>(port));
     QList<IListResourceStorageFactory*> listStoragePlugins = PluginManager::getInstance()->getObjects<IListResourceStorageFactory>();
