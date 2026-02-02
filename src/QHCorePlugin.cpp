@@ -4,6 +4,7 @@
  * It is part of the QuickHub framework - www.quickhub.org
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
+#include <QDir>
 #include "QHCorePlugin.h"
 #include "SocketApi/SocketServer.h"
 #include "QStandardPaths"

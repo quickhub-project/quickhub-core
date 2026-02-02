@@ -204,15 +204,21 @@ bool AuthenticationService::logout(QString token)
 iUserPtr AuthenticationService::getUserForUserID(QString userID) const
 {
     _lock.lockForRead();
-    QListIterator<IAuthenticator*> it(_authenticators);
+    QListIterator<QPointer<IAuthenticator>> it(_authenticators);
     _lock.unlock();
     iUserPtr userObj;
 
     while(it.hasNext())
     {
-        userObj = it.next()->getUser(userID);
+        auto authenticator = it.next();
+        if(authenticator.isNull()){
+            continue;
+        }
+        userObj = authenticator->getUser(userID);
         if(!userObj.isNull())
+        {
             break;
+        }
     }
 
     return userObj;
@@ -221,13 +227,17 @@ iUserPtr AuthenticationService::getUserForUserID(QString userID) const
 bool AuthenticationService::alreadyExists(QString userID) const
 {
     _lock.lockForRead();
-    QListIterator<IAuthenticator*> it(_authenticators);
+    QListIterator<QPointer<IAuthenticator>> it(_authenticators);
     _lock.unlock();
     iUserPtr userObj;
 
     while(it.hasNext())
     {
-        if(!it.next()->isUnusedUserID(userID))
+        auto authenticator = it.next();
+        if(authenticator.isNull()){
+            continue;
+        }
+        if(!authenticator->isUnusedUserID(userID))
             return true;
     }
 

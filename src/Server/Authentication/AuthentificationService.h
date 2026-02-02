@@ -23,6 +23,7 @@
 #include <QVector>
 #include <QMap>
 #include <QTimer>
+#include <QPointer>
 #include <QSharedPointer>
 #include <QReadWriteLock>
 #include "qhcore_global.h"
@@ -146,7 +147,7 @@ private slots:
     void checkTimeouts();
 
 private:
-    QList<IAuthenticator*> _authenticators;
+    QList<QPointer<IAuthenticator>> _authenticators;
     mutable QReadWriteLock _lock;
     QHash<QString, iIdentityPtr> _tokenToUserMap;
     QHash<QString, qint64> _tokenToExpiration;
