@@ -25,7 +25,9 @@ public:
     ModificationResult              setProperty(QString property, QVariant data, int index, QString uuid, QString token) override;
 	QObject*						getObject(int idx, QString uuid = "") const;
     void                            setResourceProperties(QStringList properties);
-protected: 
+    void setClassName(const QString &newClassName);
+
+protected:
     QVariantMap                     toVariant(QObject* object) const;
 
 private:

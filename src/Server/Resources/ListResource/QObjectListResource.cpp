@@ -28,8 +28,22 @@ bool QObjectListResource::appendObject(QObject *object)
 
     if(_initialized && object->metaObject()->className() != _className)
     {
-        qWarning()<<Q_FUNC_INFO<<": Inserted object must be an instance of " << _className;
-        return false;
+        auto superClass = object->metaObject()->superClass();
+        bool isTypeOf = false;
+        while(superClass != nullptr){
+            if(superClass->className() == _className){
+                isTypeOf = true;
+                break;
+            }
+
+            superClass = superClass->superClass();
+        }
+
+        if(!isTypeOf)
+        {
+            qWarning()<<Q_FUNC_INFO<<": Inserted object must be an instance of " << _className;
+            return false;
+        }
     }
 	
 	// setProperty can't be called on an object living in another thread
@@ -160,8 +174,12 @@ void QObjectListResource::init(QObject *firstObject)
     }
 
     _changedSlot = metaObject()->method(metaObject()->indexOfSlot("objectPropertyChanged()"));
-    auto metaObject = firstObject->metaObject();
-    _className = metaObject->className();
+    const auto* metaObject = firstObject->metaObject();
+    if(_className.isEmpty())
+    {
+        _className = metaObject->className();
+    }
+
     for(int i = 1; i < metaObject->propertyCount(); i++)
     {
         auto property = metaObject->property(i);
@@ -211,6 +229,11 @@ void QObjectListResource::disconnectObject(QObject *object)
             QObject::disconnect(object, property->notifySignal(), this, _changedSlot);
         }
     }
+}
+
+void QObjectListResource::setClassName(const QString &newClassName)
+{
+    _className = newClassName;
 }
 
 
