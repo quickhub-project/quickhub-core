@@ -35,8 +35,6 @@ bool QObjectResourceFilesystemStorage::registerQObject(QObject *object)
         return false;
 
     _object = object;
-    deserializeQObject(_object);
-    Q_EMIT initComplete();
     _changedSlot = metaObject()->method(metaObject()->indexOfSlot("objectPropertyChanged()"));
     auto metaObject = object->metaObject();
     _className = metaObject->className();
@@ -59,6 +57,9 @@ bool QObjectResourceFilesystemStorage::registerQObject(QObject *object)
 
     connect(object, &QObject::destroyed, _object, [this](){ _object = nullptr; _initialized = false;});
     _initialized = true;
+
+    deserializeQObject(_object);
+    Q_EMIT initComplete();
     return true;
 }
 
