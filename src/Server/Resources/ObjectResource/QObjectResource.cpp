@@ -82,19 +82,23 @@ IResource::ModificationResult QObjectResource::setProperty(QString name, const Q
 QVariantMap QObjectResource::getObjectData() const
 {
     if(nullptr == _object)
-            return QVariantMap();
+        return QVariantMap();
 
     QVariantMap objectData;
     QMap<QString, QVariant> data = toVariant(_object);
     QMapIterator<QString, QVariant> it(data);
+
+    while(it.hasNext())
     {
-        while(it.hasNext())
-        {
-            it.next();
-            QVariantMap value;
-            value.insert("data",it.value());
-            objectData.insert(it.key(), value);
-        }
+        it.next();
+        QVariant value = it.value();
+
+        if(value.metaType().flags() & QMetaType::IsEnumeration)
+            value = value.toInt();
+
+        QVariantMap entry;
+        entry.insert("data", value);
+        objectData.insert(it.key(), entry);
     }
 
     return objectData;

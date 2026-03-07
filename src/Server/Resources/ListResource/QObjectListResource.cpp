@@ -46,9 +46,11 @@ bool QObjectListResource::appendObject(QObject *object)
         }
     }
 	
-	// setProperty can't be called on an object living in another thread
-	QMetaObject::invokeMethod(object, [=](){object->setProperty("uuid", QUuid::createUuid().toString(QUuid::WithoutBraces));});
-	
+    if(!object->property("uuid").isValid())
+    {
+        // setProperty can't be called on an object living in another thread
+        QMetaObject::invokeMethod(object, [=](){object->setProperty("uuid", QUuid::createUuid().toString(QUuid::WithoutBraces));});
+    }
     _items.append(object);
     connectObject(object);
     Q_EMIT itemAppended(toVariant(object), iUserPtr());
@@ -239,11 +241,9 @@ void QObjectListResource::setClassName(const QString &newClassName)
 
 QVariantMap QObjectListResource::toVariant(QObject *object) const
 {
-	if(object == nullptr)
-    {
+    if(object == nullptr)
         return QVariantMap();
-    }
-	
+
     QVariantMap variant;
     QMapIterator<QString, QMetaProperty> it(_propertiesByName);
     while(it.hasNext())
@@ -252,7 +252,11 @@ QVariantMap QObjectListResource::toVariant(QObject *object) const
         if(!property->isValid())
             break;
 
-        variant[property->name()] = property->read(object);
+        QVariant value = property->read(object);
+        if(value.metaType().flags() & QMetaType::IsEnumeration)
+            value = value.toInt();
+
+        variant[property->name()] = value;
     }
 
     QVariantMap item;
@@ -271,9 +275,12 @@ void QObjectListResource::objectPropertyChanged()
 
     QString name = property.name();
     QVariant value = property.read(object);
+    if(value.metaType().flags() & QMetaType::IsEnumeration)
+        value = value.toInt();
+
     int index = _items.indexOf(object);
     QString uuid = object->property("uuid").toString();
-    Q_EMIT propertySet( name,value,index, uuid, iUserPtr(), QDateTime::currentMSecsSinceEpoch());
+    Q_EMIT propertySet(name, value, index, uuid, iUserPtr(), QDateTime::currentMSecsSinceEpoch());
 }
 
 void QObjectListResource::objectDestroyed(QObject *object)
