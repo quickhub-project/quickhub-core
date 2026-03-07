@@ -36,6 +36,9 @@ class DeviceService : public IService
     Q_OBJECT
 
 public:
+    static constexpr int NOT_FOUND  = -11;
+    static constexpr int WRONG_TYPE = -12;
+
     DeviceService(QObject* parent = nullptr);
     virtual QString         getServiceName() const override;
     virtual QStringList     getServiceCalls() const override;
@@ -44,6 +47,8 @@ public:
 
 private:
     DeviceUpdateLogic* _updateLogic = nullptr;
+    bool checkDeviceTypeWithUuid(QString uuid, QString deviceType);
+    bool checkDeviceTypeWithShortID(QString uuid, QString deviceType);
 };
 
 #endif // DEVICESERVICE_H
