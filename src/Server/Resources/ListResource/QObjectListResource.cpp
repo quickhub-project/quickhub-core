@@ -52,6 +52,7 @@ bool QObjectListResource::appendObject(QObject *object)
         QMetaObject::invokeMethod(object, [=](){object->setProperty("uuid", QUuid::createUuid().toString(QUuid::WithoutBraces));});
     }
     _items.append(object);
+    _rawPtrs.append(object);
     connectObject(object);
     Q_EMIT itemAppended(toVariant(object), iUserPtr());
     return true;
@@ -66,6 +67,7 @@ bool QObjectListResource::removeObject(QObject *object)
     }
 
     _items.removeAll(object);
+    _rawPtrs.removeAll(object);
     disconnectObject(object);
     Q_EMIT itemRemoved(idx, object->property("uuid").toString(), iUserPtr());
     return true;
@@ -285,12 +287,13 @@ void QObjectListResource::objectPropertyChanged()
 
 void QObjectListResource::objectDestroyed(QObject *object)
 {
-    int idx = _items.indexOf(object);
+    int idx = _rawPtrs.indexOf(object);
     if(idx < 0)
     {
         return;
     }
 
-    _items.removeAll(object);
+    _items.removeAt(idx);
+    _rawPtrs.removeAt(idx);
     Q_EMIT itemRemoved(idx, object->property("uuid").toString(), iUserPtr());
 }

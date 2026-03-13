@@ -38,6 +38,7 @@ private:
     QStringList                     _resourceProperties;
     bool                            _initialized = false;
     QList<QPointer<QObject>>        _items;
+    QList<QObject*>                 _rawPtrs;
     QMap<int, QMetaProperty>        _propertiesByIndex;
     QMap<QString, QMetaProperty>    _propertiesByName;
     QMetaMethod                     _changedSlot;
