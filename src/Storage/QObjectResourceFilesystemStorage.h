@@ -16,7 +16,7 @@ public:
 
 
 private:
-    bool _initialized;
+    bool _initialized = false;
     QMap<int, QMetaProperty>        _propertiesByIndex;
     QMap<QString, QMetaProperty>    _propertiesByName;
     QObject*                        _object = nullptr;;
