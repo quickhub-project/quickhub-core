@@ -16,6 +16,9 @@
 #include "Server/Resources/ListResource/ListResourceFactory.h"
 #include "Server/Resources/ObjectResource/ObjectResourceFactory.h"
 #include "Server/Resources/ResourceManager/ResourceManager.h"
+#include "Server/Authentication/ApiToken/ApiTokenService.h"
+#include "Server/Authentication/ApiToken/ApiTokenManager.h"
+#include "Server/Authentication/ApiToken/ApiTokenListResourceFactory.h"
 
 #include "PluginManager.h"
 
@@ -50,6 +53,8 @@ bool QHCorePlugin::init(QVariantMap parameters)
     }
 
     ServiceManager::instance()->registerService(new DeviceService(this));
+    ServiceManager::instance()->registerService(new ApiTokenService(this));
+    ResourceManager::instance()->addResourceFactory(new ApiTokenListResourceFactory(this));
     SocketServer::instance()->start(path, static_cast<quint16>(port));
     QList<IListResourceStorageFactory*> listStoragePlugins = PluginManager::getInstance()->getObjects<IListResourceStorageFactory>();
     if(listStoragePlugins.count() > 0)
@@ -62,6 +67,8 @@ bool QHCorePlugin::init(QVariantMap parameters)
     {
         SocketServer::instance()->setObjectResourceStorageFactory(objectStoragePlugins.at(0));
     }
+
+    ApiTokenManager::instance()->loadAndRegisterTokens();
 
     qInstallMessageHandler(Logger::handleMessage);
     return true;

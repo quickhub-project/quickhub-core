@@ -48,6 +48,16 @@ set(CORE_SOURCES
     src/Server/Authentication/IUser.h
     src/Server/Authentication/User.cpp
     src/Server/Authentication/User.h
+    src/Server/Authentication/ApiToken/ApiTokenIdentity.cpp
+    src/Server/Authentication/ApiToken/ApiTokenIdentity.h
+    src/Server/Authentication/ApiToken/ApiTokenManager.cpp
+    src/Server/Authentication/ApiToken/ApiTokenManager.h
+    src/Server/Authentication/ApiToken/ApiTokenService.cpp
+    src/Server/Authentication/ApiToken/ApiTokenService.h
+    src/Server/Authentication/ApiToken/ApiTokenListResource.cpp
+    src/Server/Authentication/ApiToken/ApiTokenListResource.h
+    src/Server/Authentication/ApiToken/ApiTokenListResourceFactory.cpp
+    src/Server/Authentication/ApiToken/ApiTokenListResourceFactory.h
     src/Server/Automation/AutomationEngine.cpp
     src/Server/Automation/AutomationEngine.h
     src/Server/Automation/QmlComponents/AutomationRule.cpp
@@ -222,6 +232,7 @@ target_include_directories(QHCore PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Connection>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Server>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Server/Authentication>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Server/Authentication/ApiToken>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Server/Automation>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Server/Automation/QmlComponents>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Server/Defines>

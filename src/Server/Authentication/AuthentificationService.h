@@ -121,6 +121,13 @@ public:
     QString login(iIdentityPtr identity, ErrorCode *error = nullptr);
 
     /*!
+        \fn QString registerToken(QString token, iIdentityPtr identity, ErrorCode *error = nullptr)
+        Like login(iIdentityPtr), but uses a predetermined token instead of generating a new UUID.
+        This is needed so that the same token value can be re-registered after a server restart.
+    */
+    AuthenticationService::ErrorCode registerToken(QString token, iIdentityPtr identity);
+
+    /*!
         \fn bool logout(QString token)
         Will remove the session and invalidate the token.
     */
