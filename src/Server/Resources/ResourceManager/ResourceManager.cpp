@@ -80,11 +80,13 @@ resourcePtr ResourceManager::getOrCreateResource(QString type, QString descripto
 
     resourcePtr resource = factory->createResource(token, descriptor);
 
-    if(!resource.isNull())
+    if(!resource.isNull() && !resource->dynamicContent())
     {
-      //  resource->setParent(this);
-        if(!resource->dynamicContent())
-            addResource(resource, resourceId);
+        addResource(resource, resourceId);
+    }
+
+    if(resource.isNull() && error){
+            *error = Err::INVALID_DATA;
     }
 
     return resource;
