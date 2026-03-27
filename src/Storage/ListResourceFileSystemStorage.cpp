@@ -92,6 +92,9 @@ QVariantList ListResourceFileSystemStorage::getList() const
 QVariant ListResourceFileSystemStorage::getItem(ItemUID uid) const
 {
     int index = checkAndCorrectIndex(uid);
+    if(index < 0 || index >= _listData.count()){
+        return QVariant();
+    }
     return _listData.at(index);
 }
 

@@ -384,18 +384,21 @@ IResource::ModificationResult ListResource::setProperty(QString property, QVaria
         return result;
     }
 
-    if(index < 0)
-    {
-        result.error = INVALID_PARAMETERS;
-        return result;
-    }
-
     IListResourceStorage::ItemUID uid;
     uid.index = index;
     uid.uuid = uuid;
 
     // get item to modify
-    QVariantMap item = _listStorage->getItem(uid).toMap();
+    QVariant itemRaw = _listStorage->getItem(uid);
+    if(!itemRaw.isValid())
+    {
+        result.error = INVALID_PARAMETERS;
+        return result;
+    }
+
+    QVariantMap item = itemRaw.toMap();
+
+
     if(!user.isNull())
     {
         item["userid"] = user->identityID();
