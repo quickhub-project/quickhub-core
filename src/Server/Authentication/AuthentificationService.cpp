@@ -73,6 +73,45 @@ iIdentityPtr AuthenticationService::validateToken(QString token)
     return identitiy;
 }
 
+bool AuthenticationService::isValidToken(QString token)
+{
+    bool tokenIsValid = false;
+    _lock.lockForWrite();
+    {
+        iIdentityPtr identitiy = _tokenToUserMap.value(token, QSharedPointer<User>());
+        if(!identitiy.isNull())
+        {
+            if(identitiy->sessionExpiration() > 0)
+            {
+                qint64 tokenExpiration = _tokenToExpiration.value(token, 0);
+                if(tokenExpiration > 0 && tokenExpiration < QDateTime::currentDateTime().toMSecsSinceEpoch())
+                {
+                    qInfo()<< "Token expired. "<< identitiy->identityID() <<" was forcibly logged out.";
+                    QMetaObject::invokeMethod(this, "logout", Qt::QueuedConnection,
+                                              Q_ARG(QString, token));
+                }
+                else
+                {
+                    qint64 expiration = QDateTime::currentDateTime().addSecs(identitiy->sessionExpiration()).toMSecsSinceEpoch();
+                        _tokenToExpiration.insert(token, expiration);
+                        tokenIsValid = true;
+                }
+            }
+            else
+            {
+                tokenIsValid = true;
+            }
+        }
+
+        if(tokenIsValid)
+        {
+            identitiy->setLastActivity(QDateTime::currentMSecsSinceEpoch());
+        }
+    }
+    _lock.unlock();
+    return tokenIsValid;
+}
+
 
 
 iUserPtr AuthenticationService::getUserForToken(QString token) const
@@ -93,10 +132,15 @@ qint64 AuthenticationService::getTokenExpiration(QString token)
 
 iUserPtr AuthenticationService::validateUser(QString userID, QString password, ErrorCode *error) const
 {
+    QReadLocker locker(&_lock);
+    return validateUser_locked(userID, password, error);
+}
 
+iUserPtr AuthenticationService::validateUser_locked(QString userID, QString password, ErrorCode *error) const
+{
     AuthenticationService::ErrorCode returnError = NoError;
 
-    iUserPtr userObj = getUserForUserID(userID);
+    iUserPtr userObj = getUserForUserID_locked(userID);
 
     if(!userObj.isNull())
     {
@@ -118,12 +162,12 @@ iUserPtr AuthenticationService::validateUser(QString userID, QString password, E
 
 QString AuthenticationService::login(QString userID, QString password, ErrorCode *error)
 {
-    iUserPtr userObj = validateUser(userID, password, error);
+    _lock.lockForWrite();
+    iUserPtr userObj = validateUser_locked(userID, password, error);
     QString token = "";
 
     if(!userObj.isNull() && *error == NoError)
     {
-        _lock.lockForWrite();
         if(userObj->isAuthorizedTo(SERVICE) && userObj->sessionCount()  >= 1)
         {
             _lock.unlock();
@@ -141,9 +185,11 @@ QString AuthenticationService::login(QString userID, QString password, ErrorCode
 
         userObj->addToken(token);
         _tokenToUserMap.insert(token, userObj);
-        _lock.unlock();
-        qInfo()<< userObj->identityID()+" logged in. ("<<userObj->sessionCount()<<" sessions open)";
     }
+    _lock.unlock();
+
+    if(!userObj.isNull() && *error == NoError)
+        qInfo()<< userObj->identityID()+" logged in. ("<<userObj->sessionCount()<<" sessions open)";
 
     return token;
 }
@@ -226,6 +272,11 @@ bool AuthenticationService::logout(QString token)
 iUserPtr AuthenticationService::getUserForUserID(QString userID) const
 {
     QReadLocker locker(&_lock);
+    return getUserForUserID_locked(userID);
+}
+
+iUserPtr AuthenticationService::getUserForUserID_locked(QString userID) const
+{
     QListIterator<QPointer<IAuthenticator>> it(_authenticators);
     iUserPtr userObj;
 

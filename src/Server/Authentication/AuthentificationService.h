@@ -93,6 +93,8 @@ public:
     */
     iIdentityPtr validateToken(QString token);
 
+    bool isValidToken(QString token);
+
     iUserPtr validateUser(QString userID, QString password, ErrorCode* error = nullptr) const;
 
     /*!
@@ -154,6 +156,9 @@ private slots:
     void checkTimeouts();
 
 private:
+    iUserPtr getUserForUserID_locked(QString userID) const;
+    iUserPtr validateUser_locked(QString userID, QString password, ErrorCode* error) const;
+
     QList<QPointer<IAuthenticator>> _authenticators;
     mutable QReadWriteLock _lock;
     QHash<QString, iIdentityPtr> _tokenToUserMap;
