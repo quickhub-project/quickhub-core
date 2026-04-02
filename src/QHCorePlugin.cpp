@@ -40,6 +40,7 @@ QHCorePlugin::~QHCorePlugin()
 
 bool QHCorePlugin::init(QVariantMap parameters)
 {
+    qInstallMessageHandler(Logger::handleMessage);
     int port = parameters.value("p", 4711).toInt();
     QString path =  parameters.value("f", QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation).at(0)).toString();
     if(parameters.contains("runtests")){
@@ -70,7 +71,7 @@ bool QHCorePlugin::init(QVariantMap parameters)
 
     ApiTokenManager::instance()->loadAndRegisterTokens();
 
-    qInstallMessageHandler(Logger::handleMessage);
+
     return true;
 }
 

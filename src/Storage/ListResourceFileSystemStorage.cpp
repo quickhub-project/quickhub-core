@@ -5,10 +5,17 @@
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
 #include "ListResourceFileSystemStorage.h"
+
 #include <QDir>
 #include <QJsonDocument>
-#include <QDebug>
+#include <QLoggingCategory>
+
 #include "FileSystemPaths.h"
+
+// ----------------------------------------------------------------------------
+// Logging
+
+Q_LOGGING_CATEGORY(lcListStorage, "quickhub.liststorage")
 ListResourceFileSystemStorage::ListResourceFileSystemStorage(QString qualifiedResourceName, QObject *parent) :
     IListResourceStorage(parent),
     _file(FileSystemPaths::instance()->getStoragePath()+qualifiedResourceName+".json"),
@@ -169,13 +176,17 @@ bool ListResourceFileSystemStorage::save()
     }
     else
     {
-        qWarning()<<"Warning: Could not open file -"<<_file.errorString();
+        qCWarning(lcListStorage) << "Could not open file for writing:" << _qualifiedResourceName << "-" << _file.errorString();
         return false;
     }
 }
 
 void ListResourceFileSystemStorage::load()
 {
+    if(! _file.exists()) {
+        qCInfo(lcListStorage) << "Could not open file for loading:" << _qualifiedResourceName<< "- File does not exist yet";
+        return;
+    }
     if( _file.open(QFile::ReadOnly))
     {
         QVariantMap file =  QJsonDocument::fromJson(_file.readAll()).toVariant().toMap();
@@ -185,6 +196,6 @@ void ListResourceFileSystemStorage::load()
     }
     else
     {
-        qWarning()<<"Warning: Could not open File:  "<<_qualifiedResourceName<<" - "<<_file.errorString();
+        qCWarning(lcListStorage) << "Could not open file for reading:" << _qualifiedResourceName << "-" << _file.errorString();
     }
 }

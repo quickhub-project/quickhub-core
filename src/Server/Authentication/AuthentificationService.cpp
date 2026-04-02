@@ -6,23 +6,32 @@
 
 
 #include "AuthentificationService.h"
-#include <QFileInfo>
-#include <QVariant>
-#include <QJsonDocument>
+#include <QCoreApplication>
+#include <QDateTime>
 #include <QDebug>
 #include <QDir>
-#include <QVector>
+#include <QFileInfo>
+#include <QJsonDocument>
+#include <QLoggingCategory>
 #include <QUuid>
-#include <QDateTime>
-#include <QCoreApplication>
+#include <QVariant>
+#include <QVector>
 #include "User.h"
 #include "IAuthenticator.h"
 
+// ----------------------------------------------------------------------------
+// Logging
+// ----------------------------------------------------------------------------
+
+Q_LOGGING_CATEGORY(lcAuthService, "quickhub.authservice")
+
+// ----------------------------------------------------------------------------
+// Singleton
+// ----------------------------------------------------------------------------
+
 Q_GLOBAL_STATIC(AuthenticationService, authenticationService);
 
-AuthenticationService::~AuthenticationService()
-{
-}
+AuthenticationService::~AuthenticationService() = default;
 
 AuthenticationService *AuthenticationService::instance()
 {
@@ -30,22 +39,34 @@ AuthenticationService *AuthenticationService::instance()
 }
 
 
+// ----------------------------------------------------------------------------
+// Lifecycle
+// ----------------------------------------------------------------------------
+
+AuthenticationService::AuthenticationService(QObject *parent) : QObject(parent),
+    _lock(QReadWriteLock::Recursive)
+{
+    // Check every minute for expired sessions.
+    _sessionTimeoutKicker.setInterval(60*1000);
+    connect(&_sessionTimeoutKicker, &QTimer::timeout, this, &AuthenticationService::checkTimeouts);
+    _sessionTimeoutKicker.start();
+}
+
+// ----------------------------------------------------------------------------
+// Authenticator registration
+// ----------------------------------------------------------------------------
+
 void AuthenticationService::registerAuthenticator(IAuthenticator *authenticator)
 {
     _lock.lockForWrite();
     _authenticators << authenticator;
     _lock.unlock();
+    qCInfo(lcAuthService) << "Authenticator registered:" << authenticator->metaObject()->className();
 }
 
-
-AuthenticationService::AuthenticationService(QObject *parent) : QObject(parent),
-    _lock(QReadWriteLock::Recursive)
-{
-    // check every minute for timeouts
-    _sessionTimeoutKicker.setInterval(60*1000);
-    connect(&_sessionTimeoutKicker, &QTimer::timeout, this, &AuthenticationService::checkTimeouts);
-    _sessionTimeoutKicker.start();
-}
+// ----------------------------------------------------------------------------
+// Token validation
+// ----------------------------------------------------------------------------
 
 iIdentityPtr AuthenticationService::validateToken(QString token)
 {
@@ -58,7 +79,7 @@ iIdentityPtr AuthenticationService::validateToken(QString token)
             qint64 tokenExpiration = _tokenToExpiration.value(token, 0);
             if(tokenExpiration > 0 && tokenExpiration < QDateTime::currentDateTime().toMSecsSinceEpoch())
             {
-                qInfo()<< "Token expired. "<< identitiy->identityID() <<" was forcibly logged out.";
+                qCInfo(lcAuthService) << "Token expired, identity =" << identitiy->identityID() << "- forcibly logged out";
                 _lock.unlock();
                 logout(token);
                 return QSharedPointer<User>();
@@ -68,6 +89,10 @@ iIdentityPtr AuthenticationService::validateToken(QString token)
         }
 
         identitiy->setLastActivity(QDateTime::currentMSecsSinceEpoch());
+    }
+    else
+    {
+        qCDebug(lcAuthService) << "validateToken: unknown token";
     }
     _lock.unlock();
     return identitiy;
@@ -86,7 +111,7 @@ bool AuthenticationService::isValidToken(QString token)
                 qint64 tokenExpiration = _tokenToExpiration.value(token, 0);
                 if(tokenExpiration > 0 && tokenExpiration < QDateTime::currentDateTime().toMSecsSinceEpoch())
                 {
-                    qInfo()<< "Token expired. "<< identitiy->identityID() <<" was forcibly logged out.";
+                    qCInfo(lcAuthService) << "Token expired, identity =" << identitiy->identityID() << "- forcibly logged out";
                     QMetaObject::invokeMethod(this, "logout", Qt::QueuedConnection,
                                               Q_ARG(QString, token));
                 }
@@ -114,6 +139,10 @@ bool AuthenticationService::isValidToken(QString token)
 
 
 
+// ----------------------------------------------------------------------------
+// Public API
+// ----------------------------------------------------------------------------
+
 iUserPtr AuthenticationService::getUserForToken(QString token) const
 {
     QReadLocker locker(&_lock);
@@ -121,14 +150,15 @@ iUserPtr AuthenticationService::getUserForToken(QString token) const
     return qSharedPointerCast<IUser>(identity);
 }
 
-
-
 qint64 AuthenticationService::getTokenExpiration(QString token)
 {
     QReadLocker locker(&_lock);
     return _tokenToExpiration.value(token, 0);
 }
 
+// ----------------------------------------------------------------------------
+// User validation
+// ----------------------------------------------------------------------------
 
 iUserPtr AuthenticationService::validateUser(QString userID, QString password, ErrorCode *error) const
 {
@@ -146,11 +176,13 @@ iUserPtr AuthenticationService::validateUser_locked(QString userID, QString pass
     {
         if(!userObj->checkPassword(password))
         {
+            qCWarning(lcAuthService) << "Login failed (incorrect password), userID =" << userID;
             returnError = IncorrectPassword;
         }
     }
     else
     {
+        qCWarning(lcAuthService) << "Login failed (user not found), userID =" << userID;
         returnError =  UserNotExists;
     }
 
@@ -159,6 +191,10 @@ iUserPtr AuthenticationService::validateUser_locked(QString userID, QString pass
 
     return userObj;
 }
+
+// ----------------------------------------------------------------------------
+// Login / Logout
+// ----------------------------------------------------------------------------
 
 QString AuthenticationService::login(QString userID, QString password, ErrorCode *error)
 {
@@ -170,6 +206,7 @@ QString AuthenticationService::login(QString userID, QString password, ErrorCode
     {
         if(userObj->isAuthorizedTo(SERVICE) && userObj->sessionCount()  >= 1)
         {
+            qCWarning(lcAuthService) << "Login denied (service account limit), userID =" << userID;
             _lock.unlock();
             *error = PermissionDenied;
             return "";
@@ -189,7 +226,7 @@ QString AuthenticationService::login(QString userID, QString password, ErrorCode
     _lock.unlock();
 
     if(!userObj.isNull() && *error == NoError)
-        qInfo()<< userObj->identityID()+" logged in. ("<<userObj->sessionCount()<<" sessions open)";
+        qCInfo(lcAuthService) << "Logged in:" << userObj->identityID() << "(" << userObj->sessionCount() << "sessions open)";
 
     return token;
 }
@@ -201,6 +238,7 @@ QString AuthenticationService::login(iIdentityPtr identity, ErrorCode *error)
         QReadLocker locker(&_lock);
         if (_tokenToUserMap.values().contains(identity))
         {
+            qCWarning(lcAuthService) << "Login denied (multiple sessions not allowed), identity =" << identity->identityID();
             if(error != nullptr)
                 *error = PermissionDenied;
             return "";
@@ -216,13 +254,16 @@ QString AuthenticationService::login(iIdentityPtr identity, ErrorCode *error)
         _lock.unlock();
     }
 
-    qInfo()<< identity->identityID()+" logged in.";
+    qCInfo(lcAuthService) << "Logged in:" << identity->identityID();
     _lock.lockForWrite();
     _tokenToUserMap.insert(token, identity);
     _lock.unlock();
     return token;
 }
 
+// ----------------------------------------------------------------------------
+// Token registration
+// ----------------------------------------------------------------------------
 
 AuthenticationService::ErrorCode AuthenticationService::registerToken(QString token, iIdentityPtr identity)
 {
@@ -231,6 +272,7 @@ AuthenticationService::ErrorCode AuthenticationService::registerToken(QString to
         QReadLocker locker(&_lock);
         if (_tokenToUserMap.values().contains(identity))
         {
+            qCWarning(lcAuthService) << "registerToken denied (multiple sessions not allowed), identity =" << identity->identityID();
             return PermissionDenied;
         }
     }
@@ -243,7 +285,7 @@ AuthenticationService::ErrorCode AuthenticationService::registerToken(QString to
         _lock.unlock();
     }
 
-    qInfo() << identity->identityID() + " registered with token.";
+    qCInfo(lcAuthService) << "Token registered, identity =" << identity->identityID();
     _lock.lockForWrite();
     _tokenToUserMap.insert(token, identity);
     _lock.unlock();
@@ -261,13 +303,18 @@ bool AuthenticationService::logout(QString token)
         identity->removeToken(token);
         _lock.unlock();
 
-        qInfo()<< identity->identityID()+" logged out.";
+        qCInfo(lcAuthService) << "Logged out:" << identity->identityID();
         Q_EMIT sessionClosed(identity->identityID(), token);
         return true;
     }
+    qCDebug(lcAuthService) << "logout: unknown token";
     _lock.unlock();
     return false;
 }
+
+// ----------------------------------------------------------------------------
+// User lookup
+// ----------------------------------------------------------------------------
 
 iUserPtr AuthenticationService::getUserForUserID(QString userID) const
 {
@@ -314,6 +361,10 @@ bool AuthenticationService::alreadyExists(QString userID) const
     return false;
 }
 
+// ----------------------------------------------------------------------------
+// Session timeout
+// ----------------------------------------------------------------------------
+
 void AuthenticationService::checkTimeouts()
 {
     QStringList expiredTokens;
@@ -333,11 +384,7 @@ void AuthenticationService::checkTimeouts()
 
     for(const QString& token : expiredTokens)
     {
-        qInfo()<< "Token expired. Identity forcibly logged out.";
+        qCInfo(lcAuthService) << "Session timeout, forcibly logging out token";
         logout(token);
     }
 }
-
-
-
-
