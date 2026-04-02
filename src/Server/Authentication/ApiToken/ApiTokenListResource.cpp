@@ -65,6 +65,23 @@ bool ApiTokenListResource::isPermittedToWrite(iIdentityPtr identity) const
     return !identity.isNull() && identity->isAuthorizedTo(IS_ADMIN);
 }
 
+QVariant ApiTokenListResource::getItem(int idx, QString uuid) const
+{
+    QVariantList items = ApiTokenManager::instance()->getTokenMetadataList();
+    if(idx >=  0 && idx < items.count()){
+        return items.at(idx);
+    }
+
+    foreach (QVariant item, std::as_const(items)) {
+        auto map = item.toMap();
+        if(map.value("uuid").toString() == uuid){
+            return map;
+        }
+    }
+
+    return QVariant();
+}
+
 void ApiTokenListResource::onTokenCreated(const QString& uuid)
 {
     Q_UNUSED(uuid)

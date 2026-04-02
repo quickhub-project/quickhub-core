@@ -58,6 +58,7 @@ bool ApiTokenService::call(QString call, QString token, QString cbID, QVariant a
             answer["token"] = result.token;
             answer["uuid"] = result.uuid;
             answer["name"] = result.name;
+            answer["errorcode"] = 0;
         }
         else
         {
@@ -69,5 +70,22 @@ bool ApiTokenService::call(QString call, QString token, QString cbID, QVariant a
         return true;
     }
 
+    if (call == "deleteToken")
+    {
+        QVariantMap args = argument.toMap();
+        QString uuid = args.value("uuid").toString();
+
+
+        QVariantMap answer;
+        if(ApiTokenManager::instance()->deleteToken(uuid)){
+            answer["errorcode"] = 0;
+        }
+        else{
+            answer["errorcode"] = -1;
+        }
+
+        Q_EMIT response(cbID, answer);
+        return true;
+    }
     return false;
 }
