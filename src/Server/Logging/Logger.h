@@ -55,14 +55,6 @@ public:
                 rawCat.constData(),   // %-20s paddet rechts mit Leerzeichen
                 message.constData(),
                 reset);
-
-        // fprintf(stderr, "%s%s%s %s| %s%s|%s %s%s\n",
-        //         color, bold, label,
-        //         time.constData(),
-        //         color, category.constData(),
-        //         reset,
-        //         message.constData(),
-        //         reset);
     }
 };
 
