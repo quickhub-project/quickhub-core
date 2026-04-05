@@ -226,6 +226,11 @@ Err::CloudError DeviceManager::prepareDeviceMapping(QString token, QString mappi
     return Err::NO_ERROR;
 }
 
+Err::CloudError DeviceManager::removeMapping(const QString& mapping)
+{
+    return unhook(mapping);
+}
+
 // ----------------------------------------------------------------------------
 // Handle management
 // ----------------------------------------------------------------------------

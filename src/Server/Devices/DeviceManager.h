@@ -144,6 +144,7 @@ public:
     QString                   getTypeForUuid(QString uuid) const;
     QString                   getUuidForShortId(QString shortID) const;
 
+    Err::CloudError           removeMapping(const QString& mapping);
 
     static DeviceManager* instance();
 
