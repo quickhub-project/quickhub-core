@@ -140,6 +140,7 @@ void DeviceHandle::setUuid(QString uuid)
                             << "path:" << getResourcePath();
 
     Q_EMIT uuidChanged(_uuid);
+    save();
 }
 
 void DeviceHandle::setDescription(QString description, QString token)
@@ -344,7 +345,7 @@ IDevice::DeviceError DeviceHandle::setDeviceProperty(QString property, QVariant 
     if (!prop)
         return IDevice::PROPERTY_NOT_EXISTS;
 
-    prop->setValue(std::move(value));
+    prop->setValue(value);
     return IDevice::NO_ERROR;
 }
 
@@ -649,8 +650,8 @@ void DeviceHandle::sendPropertyToDevice(QString name, QVariant value)
         qCDebug(lcDeviceHandle) << "No device attached, persisting property shadow."
                                 << "uuid:" << _uuid
                                 << "property:" << name;
-        save();
     }
+    save();
 
     Q_EMIT propertyChanged(_uuid, name, value, true);
 }
