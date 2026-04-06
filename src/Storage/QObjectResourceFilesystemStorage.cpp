@@ -90,7 +90,7 @@ bool QObjectResourceFilesystemStorage::deserializeQObject(QObject *object)
 bool QObjectResourceFilesystemStorage::registerQObject(QObject *object)
 {
     if (_initialized) {
-        qCWarning(lcQObjectStorage) << "Object already registered, ignoring."
+        qCDebug(lcQObjectStorage) << "Object already registered, ignoring."
                                      << "class:" << _className;
         return false;
     }
