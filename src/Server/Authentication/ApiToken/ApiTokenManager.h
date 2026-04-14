@@ -66,6 +66,7 @@ private:
     QMap<QString, QString> _uuidToToken;
     QTimer _expirationTimer;
     IListResourceStorage* _storage;
+    static inline QString getRandomString(int count);
 };
 
 #endif // APITOKENMANAGER_H

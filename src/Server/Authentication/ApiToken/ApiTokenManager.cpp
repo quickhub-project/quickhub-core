@@ -9,6 +9,7 @@
 #include "../AuthentificationService.h"
 #include "../../../Storage/ListResourceFileSystemStorage.h"
 
+#include <QRandomGenerator>
 #include <QUuid>
 #include <QLoggingCategory>
 #include <QGlobalStatic>
@@ -98,7 +99,7 @@ CreateTokenResult ApiTokenManager::createToken(const QString& name, const QStrin
     }
 
     QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    QString token = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    QString token = getRandomString(128);
 
     // Create an identity that represents the API token's permissions.
     auto* identity = new ApiTokenIdentity(uuid, name, description, permissions, expirationDate, this);
@@ -139,7 +140,6 @@ CreateTokenResult ApiTokenManager::createToken(const QString& name, const QStrin
                               << "name:" << name
                               << "uuid:" << uuid;
     Q_EMIT tokenCreated(uuid);
-
     return result;
 }
 
@@ -312,3 +312,20 @@ void ApiTokenManager::checkExpiredTokens()
         deleteToken(uuid);
     }
 }
+
+// ----------------------------------------------------------------------------
+// Helpers
+// ----------------------------------------------------------------------------
+QString ApiTokenManager::getRandomString(int count)
+{
+    const QString possibleCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYabcdefghijklmnopqrstuvwxyzZ0123456789-.!?*§");
+    QString randomString;
+    for(int i=0; i < count; ++i)
+    {
+        int index = QRandomGenerator::global()->bounded(possibleCharacters.length());
+        QChar nextChar = possibleCharacters.at(index);
+        randomString.append(nextChar);
+    }
+    return randomString;
+}
+
