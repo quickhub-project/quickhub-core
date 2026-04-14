@@ -178,9 +178,13 @@ QVariantMap User::getUserData() const
     return _userData;
 }
 
-bool User::checkPassword(QString password)
+IUser::CheckPasswortResult User::checkPassword(QString password)
 {
-    return generateHash(password) == _passHash;
+    if(generateHash(password) == _passHash){
+        return CheckPasswortResult::PASSWORD_OK;
+    };
+
+    return CheckPasswortResult::PASSWORD_WRONG;
 }
 
 bool User::setPassword(QString password, bool isTemporary)

@@ -215,7 +215,7 @@ AuthenticationService::ErrorCode DefaultAuthenticator::changePassword(QString to
         if(user.isNull())
             return AuthenticationService::InvalidData;
 
-        if(!user->checkPassword(oldPassword)) // if you want to change your own password
+        if(user->checkPassword(oldPassword) == IUser::CheckPasswortResult::PASSWORD_WRONG) // if you want to change your own password
             return AuthenticationService::IncorrectPassword;
 
         userToModify = user;
@@ -291,7 +291,7 @@ AuthenticationService::ErrorCode DefaultAuthenticator::deleteUser(QString token,
         if(castedUser.isNull())
             return AuthenticationService::InvalidData;
 
-        if(castedUser->checkPassword(password))
+        if(castedUser->checkPassword(password) != IUser::CheckPasswortResult::PASSWORD_WRONG)
         {
             deleteUser(castedUser);
             return AuthenticationService::NoError;

@@ -68,6 +68,7 @@ public:
 
     enum ErrorCode
     {
+        PasswordResetRequested = 1,
         NoError = 0,
         UserAlreadyExists = -1,
         IncompleteData = - 2,

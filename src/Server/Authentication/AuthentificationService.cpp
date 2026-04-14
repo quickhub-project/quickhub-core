@@ -168,17 +168,34 @@ iUserPtr AuthenticationService::validateUser(QString userID, QString password, E
 
 iUserPtr AuthenticationService::validateUser_locked(QString userID, QString password, ErrorCode *error) const
 {
-    AuthenticationService::ErrorCode returnError = NoError;
+    AuthenticationService::ErrorCode returnError = UnknownInternalError;
 
     iUserPtr userObj = getUserForUserID_locked(userID);
 
     if(!userObj.isNull())
     {
-        if(!userObj->checkPassword(password))
+        switch(userObj->checkPassword(password))
         {
-            qCWarning(lcAuthService) << "Login failed (incorrect password), userID =" << userID;
-            returnError = IncorrectPassword;
+            case IUser::CheckPasswortResult::PASSWORD_OK:
+            {
+                returnError = NoError;
+                break;
+            }
+
+            case IUser::CheckPasswortResult::PASSWORD_WRONG:
+            {
+                qCWarning(lcAuthService) << "Login failed (incorrect password), userID =" << userID;
+                returnError = IncorrectPassword;
+                break;
+            }
+
+            case IUser::CheckPasswortResult::PASSSWORD_RESET_REQUESTED:
+            {
+                returnError = PasswordResetRequested;
+                break;
+            }
         }
+
     }
     else
     {
@@ -202,7 +219,7 @@ QString AuthenticationService::login(QString userID, QString password, ErrorCode
     iUserPtr userObj = validateUser_locked(userID, password, error);
     QString token = "";
 
-    if(!userObj.isNull() && *error == NoError)
+    if(!userObj.isNull() && (*error == NoError || *error == PasswordResetRequested))
     {
         if(userObj->isAuthorizedTo(SERVICE) && userObj->sessionCount()  >= 1)
         {
