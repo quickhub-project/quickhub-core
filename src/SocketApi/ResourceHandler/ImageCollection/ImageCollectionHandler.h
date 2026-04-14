@@ -27,6 +27,7 @@ private:
 
 private slots:
      void imageAddedSlot(QString uuid);
+     void imageRemovedSlot(QString uuid);
 
 public slots:
 };
