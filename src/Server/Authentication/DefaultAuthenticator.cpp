@@ -308,7 +308,7 @@ AuthenticationService::ErrorCode DefaultAuthenticator::deleteUser(QString token,
         if(!user->isAuthorizedTo(DELETE_USERS))
             return AuthenticationService::PermissionDenied;
 
-        userPtr castedUserToDelete = qSharedPointerCast<User>(userToDelete);
+        userPtr castedUserToDelete = qSharedPointerDynamicCast<User>(userToDelete);
         if(castedUserToDelete.isNull())
             return AuthenticationService::InvalidData;
 
