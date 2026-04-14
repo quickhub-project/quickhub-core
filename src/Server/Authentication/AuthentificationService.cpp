@@ -204,7 +204,9 @@ iUserPtr AuthenticationService::validateUser_locked(QString userID, QString pass
     }
 
     if(error)
+    {
         *error = returnError;
+    }
 
     return userObj;
 }
@@ -242,8 +244,10 @@ QString AuthenticationService::login(QString userID, QString password, ErrorCode
     }
     _lock.unlock();
 
-    if(!userObj.isNull() && *error == NoError)
+    if(!token.isEmpty())
+    {
         qCInfo(lcAuthService) << "Logged in:" << userObj->identityID() << "(" << userObj->sessionCount() << "sessions open)";
+    }
 
     return token;
 }
