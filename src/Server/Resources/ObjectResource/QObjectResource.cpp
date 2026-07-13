@@ -135,6 +135,9 @@ void QObjectResource::objectPropertyChanged()
     QString name = property.name();
     QVariant value = property.read(object);
 
+    if(value.metaType().flags() & QMetaType::IsEnumeration)
+        value = value.toInt();
+
     Q_EMIT propertyChanged(name, value, iUserPtr());
 }
 
