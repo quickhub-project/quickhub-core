@@ -13,9 +13,11 @@
 #include "Server/Authentication/AuthentificationService.h"
 #include "Server/Authentication/User.h"
 #include "Server/Authentication/AuthentificationService.h"
+#include "Server/Resources/ListResource/ListAccessProxy.h"
 
 SynchronizedListHandler::SynchronizedListHandler(QSharedPointer<ListResource> resource) : IResourceHandler(resource->getResourceType(), resource.data()),
-    _resource(resource)
+    _resource(resource),
+    _proxy(new ListAccessProxy(resource, this))
 {
     connect(_resource.data(), &ListResource::itemAppended, this, &SynchronizedListHandler::itemAppended);
     connect(_resource.data(), &ListResource::itemInserted, this, &SynchronizedListHandler::itemInserted);
@@ -46,10 +48,12 @@ void SynchronizedListHandler::initHandle(ISocket* handle)
     else
     {
         msg["command"] = "synclist:dump";
-        parameters["data"] = _resource.data()->getListData();
+        QString token = _tokenToHandleMap.key(handle);
+        iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
+        parameters["data"] = _proxy->getListData(identity);
     }
 
-    parameters["metadata"] = _resource.data()->getMetadata();
+    parameters["metadata"] = _proxy->getMetadata();
     msg["parameters"] = parameters;
     handle->sendVariant(msg);
 }
@@ -71,8 +75,10 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
 
     if(command == "synclist:dump")
     {
-        parameters["data"] = _resource.data()->getListData();
-        parameters["metadata"] = _resource.data()->getMetadata();
+        QString dumpToken = _tokenToHandleMap.key(handle);
+        iIdentityPtr dumpIdentity = AuthenticationService::instance()->validateToken(dumpToken);
+        parameters["data"] = _proxy->getListData(dumpIdentity);
+        parameters["metadata"] = _proxy->getMetadata();
         msg["parameters"] = parameters;
         handle->sendVariant(msg);
         return;
@@ -82,16 +88,18 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
     {
         int from = parameters["from"].toInt();
         int count = parameters["count"].toInt();
-        if(from < 0 || count <= 0 || from+count-1  >= _resource->getCount())
+        if(from < 0 || count <= 0 || from+count-1  >= _proxy->getCount())
         {
             return;
         }
 
+        QString getToken = _tokenToHandleMap.key(handle);
+        iIdentityPtr getIdentity = AuthenticationService::instance()->validateToken(getToken);
         QVariantList data;
 
         for(int i = from; i < from+count; i++)
         {
-            data << _resource->getItem(i);
+            data << _proxy->getItem(i, getIdentity);
         }
 
         parameters["data"] = data;
@@ -103,8 +111,8 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
 
     if(command == "synclist:filter")
     {
-        if(_resource->dynamicContent())
-            _resource->setFilter(data.toMap());
+        if(_proxy->dynamicContent())
+            _proxy->setFilter(data.toMap());
     }
 
     // ############### MODIFIER
@@ -112,7 +120,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
     if(command == "synclist:append")
     {
         disconnect(_resource.data(), &ListResource::itemAppended, this, &SynchronizedListHandler::itemAppended);
-        ListResource::ModificationResult result = _resource.data()->appendItem(data, token);
+        ListResource::ModificationResult result = _proxy->appendItem(data, token);
         connect(_resource.data(), &ListResource::itemAppended, this, &SynchronizedListHandler::itemAppended);
         handleError(command, result.error, handle);
         if(result.error == ListResource::NO_ERROR)
@@ -135,7 +143,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
         }
 
         disconnect(_resource.data(), &ListResource::itemInserted, this, &SynchronizedListHandler::itemInserted);
-        ListResource::ModificationResult result = _resource.data()->insertAt(data, index, token);
+        ListResource::ModificationResult result = _proxy->insertAt(data, index, token);
         connect(_resource.data(), &ListResource::itemInserted, this, &SynchronizedListHandler::itemInserted);
         handleError(command, result.error, handle);
         if(result.error == ListResource::NO_ERROR)
@@ -153,7 +161,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
         QVariantList dataList = data.toList();
 
         disconnect(_resource.data(), &ListResource::listAppended, this, &SynchronizedListHandler::listAppended);
-        ListResource::ModificationResult result = _resource->appendList(dataList, token);
+        ListResource::ModificationResult result = _proxy->appendList(dataList, token);
         connect(_resource.data(), &ListResource::listAppended, this, &SynchronizedListHandler::listAppended);
         handleError(command, result.error, handle);
         if(result.error == ListResource::NO_ERROR)
@@ -168,7 +176,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
     if(command == "synclist:clear")
     {
         disconnect(_resource.data(), &ListResource::listCleared, this, &SynchronizedListHandler::listCleared);
-        ListResource::ModificationResult result = _resource->clearList(token);
+        ListResource::ModificationResult result = _proxy->clearList(token);
         connect(_resource.data(), &ListResource::listCleared, this, &SynchronizedListHandler::listCleared);
         handleError(command, result.error, handle);
         if(result.error == ListResource::NO_ERROR)
@@ -182,7 +190,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
     if(command == "synclist:delete")
     {
         disconnect(_resource.data(), &ListResource::listDeleted, this, &SynchronizedListHandler::listDeleted);
-        ListResource::ModificationResult result = _resource->deleteList(token);
+        ListResource::ModificationResult result = _proxy->deleteList(token);
         connect(_resource.data(), &ListResource::listDeleted, this, &SynchronizedListHandler::listDeleted);
         handleError(command, result.error, handle);
         if(result.error == ListResource::NO_ERROR)
@@ -199,7 +207,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
         QString property = parameters["property"].toString();
 
         disconnect(_resource.data(), &ListResource::propertySet, this, &SynchronizedListHandler::propertySet);
-        ListResource::ModificationResult result = _resource->setProperty(property, data, index, uuid, token);
+        ListResource::ModificationResult result = _proxy->setProperty(property, data, index, uuid, token);
         connect(_resource.data(), &ListResource::propertySet, this, &SynchronizedListHandler::propertySet);
 
         parameters["lastupdate"] = result.data.toMap()["lastupdate"];
@@ -221,7 +229,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
         QString uuid = parameters["uuid"].toString();
 
         disconnect(_resource.data(), &ListResource::itemSet, this, &SynchronizedListHandler::itemSet);
-        ListResource::ModificationResult result = _resource->set(data, index, uuid, token);
+        ListResource::ModificationResult result = _proxy->set(data, index, uuid, token);
         connect(_resource.data(), &ListResource::itemSet, this, &SynchronizedListHandler::itemSet);
 
         parameters["data"] = result.data;
@@ -237,7 +245,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
     if(command == "synclist:metadata:set")
     {
          disconnect(_resource.data(), &ListResource::metadataChanged,  this, &SynchronizedListHandler::metadataChanged);
-        _resource.data()->setMetadata(parameters["metadata"]);
+        _proxy->setMetadata(parameters["metadata"]);
         connect(_resource.data(), &ListResource::metadataChanged,  this, &SynchronizedListHandler::metadataChanged);
         deployToAll(msg, handle);
     }
@@ -248,7 +256,7 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
         QString uuid = parameters["uuid"].toString();
 
         disconnect(_resource.data(), &ListResource::itemRemoved, this, &SynchronizedListHandler::itemRemoved);
-        ListResource::ModificationResult result = _resource->removeItem(uuid, token, index);
+        ListResource::ModificationResult result = _proxy->removeItem(uuid, token, index);
         connect(_resource.data(), &ListResource::itemRemoved, this, &SynchronizedListHandler::itemRemoved);
         handleError(command, result.error, handle);
         if(result.error == ListResource::NO_ERROR)
@@ -279,7 +287,19 @@ void SynchronizedListHandler::itemAppended(QVariant data, iIdentityPtr user)
     QVariantMap parameters;
     parameters["data"] =  data;
     msg["parameters"] = parameters;
-    deployToAll(msg);
+
+    if (!_resource->hasPropertyFilter())
+    {
+        deployToAll(msg);
+        return;
+    }
+
+    deployToAllFiltered(msg, [this](QVariantMap m, iIdentityPtr identity) {
+        QVariantMap params = m["parameters"].toMap();
+        params["data"] = _proxy->filterItemForRead(params["data"].toMap(), identity);
+        m["parameters"] = params;
+        return m;
+    });
 }
 
 void SynchronizedListHandler::itemInserted(QVariant data, int index, iIdentityPtr user)
@@ -291,7 +311,19 @@ void SynchronizedListHandler::itemInserted(QVariant data, int index, iIdentityPt
     parameters["data"] =  data;
     parameters["index"] =  index;
     msg["parameters"] = parameters;
-    deployToAll(msg);
+
+    if (!_resource->hasPropertyFilter())
+    {
+        deployToAll(msg);
+        return;
+    }
+
+    deployToAllFiltered(msg, [this](QVariantMap m, iIdentityPtr identity) {
+        QVariantMap params = m["parameters"].toMap();
+        params["data"] = _proxy->filterItemForRead(params["data"].toMap(), identity);
+        m["parameters"] = params;
+        return m;
+    });
 }
 
 void SynchronizedListHandler::listAppended(QVariantList data, iIdentityPtr user)
@@ -302,7 +334,24 @@ void SynchronizedListHandler::listAppended(QVariantList data, iIdentityPtr user)
     QVariantMap parameters;
     parameters["data"] =  data;
     msg["parameters"] = parameters;
-    deployToAll(msg);
+
+    if (!_resource->hasPropertyFilter())
+    {
+        deployToAll(msg);
+        return;
+    }
+
+    deployToAllFiltered(msg, [this](QVariantMap m, iIdentityPtr identity) {
+        QVariantMap params = m["parameters"].toMap();
+        QVariantList items = params["data"].toList();
+        QVariantList filtered;
+        filtered.reserve(items.size());
+        for (const QVariant& item : items)
+            filtered.append(_proxy->filterItemForRead(item.toMap(), identity));
+        params["data"] = filtered;
+        m["parameters"] = params;
+        return m;
+    });
 }
 
 void SynchronizedListHandler::itemRemoved(int index, QString uuid, iIdentityPtr user)
@@ -343,7 +392,19 @@ void SynchronizedListHandler::itemSet(QVariant data, int index, QString uuid, iI
     parameters["index"] =  index;
     parameters["data"] =  data;
     msg["parameters"] = parameters;
-    deployToAll(msg);
+
+    if (!_resource->hasPropertyFilter())
+    {
+        deployToAll(msg);
+        return;
+    }
+
+    deployToAllFiltered(msg, [this](QVariantMap m, iIdentityPtr identity) {
+        QVariantMap params = m["parameters"].toMap();
+        params["data"] = _proxy->filterItemForRead(params["data"].toMap(), identity);
+        m["parameters"] = params;
+        return m;
+    });
 }
 
 void SynchronizedListHandler::propertySet(QString property, QVariant data, int index, QString uuid, iIdentityPtr user, qint64 timestamp)
@@ -368,7 +429,21 @@ void SynchronizedListHandler::propertySet(QString property, QVariant data, int i
     }
     msg["parameters"] = parameters;
 
-    deployToAll(msg);
+    if (!_resource->hasPropertyFilter())
+    {
+        deployToAll(msg);
+        return;
+    }
+
+    for (ISocket* handle : _handles)
+    {
+        QString handleToken = _tokenToHandleMap.key(handle);
+        iIdentityPtr identity = AuthenticationService::instance()->validateToken(handleToken);
+        if (_proxy->canReadProperty(property, identity))
+        {
+            handle->sendVariant(msg);
+        }
+    }
 }
 
 void SynchronizedListHandler::listResetted()
@@ -379,6 +454,17 @@ void SynchronizedListHandler::listResetted()
     parameters["count"] =  _resource->getCount();
     msg["parameters"] = parameters;
     deployToAll(msg);
+}
+
+void SynchronizedListHandler::deployToAllFiltered(QVariantMap msg, std::function<QVariantMap(QVariantMap, iIdentityPtr)> filterFn)
+{
+    for (ISocket* handle : _handles)
+    {
+        QString handleToken = _tokenToHandleMap.key(handle);
+        iIdentityPtr identity = AuthenticationService::instance()->validateToken(handleToken);
+        QVariantMap filtered = filterFn(msg, identity);
+        handle->sendVariant(filtered);
+    }
 }
 
 bool SynchronizedListHandler::isPermitted(QString token) const

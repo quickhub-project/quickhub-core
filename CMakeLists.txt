@@ -85,6 +85,8 @@ set(CORE_SOURCES
     src/Server/Logging/Logger.h
     src/Server/Resources/ListResource/IListResourceStorage.h
     src/Server/Resources/ListResource/IListResourceStorageFactory.h
+    src/Server/Resources/ListResource/ListAccessProxy.cpp
+    src/Server/Resources/ListResource/ListAccessProxy.h
     src/Server/Resources/ListResource/ListResource.cpp
     src/Server/Resources/ListResource/ListResource.h
     src/Server/Resources/ListResource/ListResourceFactory.cpp

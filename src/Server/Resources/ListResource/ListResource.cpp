@@ -24,6 +24,21 @@ ListResource::ListResource(IListResourceStorage *storage, QObject *parent) : IRe
         storage->setParent(this);
 }
 
+void ListResource::setPropertyFilter(PropertyFilterFn filter)
+{
+    _propertyFilter = std::move(filter);
+}
+
+bool ListResource::hasPropertyFilter() const
+{
+    return static_cast<bool>(_propertyFilter);
+}
+
+const ListResource::PropertyFilterFn& ListResource::propertyFilter() const
+{
+    return _propertyFilter;
+}
+
 ListResource::~ListResource()
 {
     if(!_listStorage)
