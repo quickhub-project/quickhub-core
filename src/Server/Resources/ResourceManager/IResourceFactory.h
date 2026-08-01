@@ -104,7 +104,11 @@ public:
 
     virtual QString generateQualifiedResourceName(QString descriptor, QString token) const
     {
-        iIdentityPtr  user = AuthenticationService::instance()->validateToken(token);
+        iIdentityPtr  user = nullptr;
+        if(!token.isEmpty())
+        {
+            AuthenticationService::instance()->validateToken(token);
+        }
         return generateQualifiedResourceName(descriptor, user);
     }
 

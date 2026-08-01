@@ -70,6 +70,11 @@ void AuthenticationService::registerAuthenticator(IAuthenticator *authenticator)
 
 iIdentityPtr AuthenticationService::validateToken(QString token)
 {
+    if(token.isEmpty()){
+        qCDebug(lcAuthService) << "validateToken: token is empty";
+        return nullptr;
+    }
+
     _lock.lockForWrite();
     iIdentityPtr identitiy = _tokenToUserMap.value(token, QSharedPointer<User>());
     if(!identitiy.isNull())
