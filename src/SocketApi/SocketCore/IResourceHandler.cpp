@@ -56,7 +56,8 @@ void IResourceHandler::detachHandle(ISocket *handle)
     if(_handles.contains(handle))
     {
         _handles.remove(handle);
-        _tokenToHandleMap.remove(_tokenToHandleMap.key(handle));
+        QString token = _tokenToHandleMap.key(handle);
+        _tokenToHandleMap.remove(token, handle);
         handle->setParent(nullptr);
         disconnect(handle, &ISocket::messageReceived, this, &IResourceHandler::messageReceived);
         disconnect(handle, &ISocket::disconnected,    this, &IResourceHandler::handleDisconnected);

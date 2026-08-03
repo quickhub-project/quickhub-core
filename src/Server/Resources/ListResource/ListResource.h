@@ -50,13 +50,6 @@ protected:
 public:
     ~ListResource() override;
 
-    struct PropertyAccess {
-        bool canRead = true;
-        bool canWrite = true;
-    };
-
-    using PropertyFilterFn = std::function<PropertyAccess(iIdentityPtr identity, const QString& property)>;
-
     /*!
         Sets a property filter function. When set, the ListAccessProxy will use it
         to control per-property read/write access. When not set (default), all

@@ -121,7 +121,7 @@ bool QObjectResourceFilesystemStorage::registerQObject(QObject *object)
     }
 
     // Cleanup when the tracked object is destroyed.
-    connect(object, &QObject::destroyed, _object, [this]() {
+    connect(object, &QObject::destroyed, this, [this]() {
         qCInfo(lcQObjectStorage) << "Tracked object destroyed, resetting."
                                   << "class:" << _className;
         _object = nullptr;

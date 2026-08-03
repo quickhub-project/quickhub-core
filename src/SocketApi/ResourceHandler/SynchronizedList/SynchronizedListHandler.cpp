@@ -50,6 +50,11 @@ void SynchronizedListHandler::initHandle(ISocket* handle)
         msg["command"] = "synclist:dump";
         QString token = _tokenToHandleMap.key(handle);
         iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
+        if(identity.isNull())
+        {
+            qWarning() << "SynchronizedListHandler::initHandle - invalid identity for handle";
+            return;
+        }
         parameters["data"] = _proxy->getListData(identity);
     }
 
@@ -77,6 +82,11 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
     {
         QString dumpToken = _tokenToHandleMap.key(handle);
         iIdentityPtr dumpIdentity = AuthenticationService::instance()->validateToken(dumpToken);
+        if(dumpIdentity.isNull())
+        {
+            qWarning() << "SynchronizedListHandler::handleMessage - synclist:dump with invalid identity";
+            return;
+        }
         parameters["data"] = _proxy->getListData(dumpIdentity);
         parameters["metadata"] = _proxy->getMetadata();
         msg["parameters"] = parameters;
@@ -95,6 +105,11 @@ void SynchronizedListHandler::handleMessage(QVariant message, ISocket *handle)
 
         QString getToken = _tokenToHandleMap.key(handle);
         iIdentityPtr getIdentity = AuthenticationService::instance()->validateToken(getToken);
+        if(getIdentity.isNull())
+        {
+            qWarning() << "SynchronizedListHandler::handleMessage - synclist:get with invalid identity";
+            return;
+        }
         QVariantList data;
 
         for(int i = from; i < from+count; i++)
@@ -439,7 +454,7 @@ void SynchronizedListHandler::propertySet(QString property, QVariant data, int i
     {
         QString handleToken = _tokenToHandleMap.key(handle);
         iIdentityPtr identity = AuthenticationService::instance()->validateToken(handleToken);
-        if (_proxy->canReadProperty(property, identity))
+        if (!identity.isNull() && _proxy->canReadProperty(property, identity))
         {
             handle->sendVariant(msg);
         }
@@ -462,6 +477,8 @@ void SynchronizedListHandler::deployToAllFiltered(QVariantMap msg, std::function
     {
         QString handleToken = _tokenToHandleMap.key(handle);
         iIdentityPtr identity = AuthenticationService::instance()->validateToken(handleToken);
+        if(identity.isNull())
+            continue;
         QVariantMap filtered = filterFn(msg, identity);
         handle->sendVariant(filtered);
     }

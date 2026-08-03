@@ -9,9 +9,11 @@
 #define SOCKETOBJECTHANDLER_H
 
 #include <QObject>
+#include <functional>
 #include "SocketCore/IResourceHandler.h"
 #include "Connection/VirtualConnection.h"
 #include "Server/Resources/ObjectResource/ObjectResource.h"
+#include "Server/Resources/ObjectResource/ObjectAccessProxy.h"
 
 class SynchronizedObjectHandler : public IResourceHandler
 {
@@ -32,7 +34,9 @@ public:
 
 private:
     QSharedPointer<ObjectResource> _resource;
+    ObjectAccessProxy* _proxy;
     QList<ISocket*> _handles;
+    void deployToAllFiltered(QVariantMap msg, std::function<QVariantMap(QVariantMap, iIdentityPtr)> filterFn);
 
 signals:
 

@@ -379,7 +379,7 @@ ListResource::ModificationResult ListResource::setProperty(QString property, QVa
 
     iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
 
-    if(!isPermittedToWrite(identity) || !_allowUserAccess) // TODO: call isPermittedToWrite here
+    if(!isPermittedToWrite(identity) || !_allowUserAccess)
     {
         ModificationResult result;
         result.error =  PERMISSION_DENIED;

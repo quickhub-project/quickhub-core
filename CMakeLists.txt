@@ -97,6 +97,8 @@ set(CORE_SOURCES
     src/Server/Resources/ListResource/QObjectListResource.h
     src/Server/Resources/ObjectResource/IObjectResourceStorage.h
     src/Server/Resources/ObjectResource/IObjectResourceStorageFactory.h
+    src/Server/Resources/ObjectResource/ObjectAccessProxy.cpp
+    src/Server/Resources/ObjectResource/ObjectAccessProxy.h
     src/Server/Resources/ObjectResource/ObjectResource.cpp
     src/Server/Resources/ObjectResource/ObjectResource.h
     src/Server/Resources/ObjectResource/ObjectResourceFactory.cpp
