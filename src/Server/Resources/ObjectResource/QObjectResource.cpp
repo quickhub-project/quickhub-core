@@ -41,7 +41,7 @@ bool QObjectResource::initObject(QObject *object)
         }
     }
 
-    connect(object, &QObject::destroyed, _object, [this](){ _object = nullptr; _initialized = false;});
+    connect(object, &QObject::destroyed, this, [this](){ _object = nullptr; _initialized = false;});
     _initialized = true;
     return true;
 }
