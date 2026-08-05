@@ -35,7 +35,6 @@ public:
 private:
     QSharedPointer<ObjectResource> _resource;
     ObjectAccessProxy* _proxy;
-    QList<ISocket*> _handles;
     void deployToAllFiltered(QVariantMap msg, std::function<QVariantMap(QVariantMap, iIdentityPtr)> filterFn);
 
 signals:
