@@ -23,7 +23,7 @@ public:
     ModificationResult removeItem(QString uuid, QString token, int index = -1) override;
     bool isPermittedToRead(iIdentityPtr identity) const override;
     bool isPermittedToWrite(iIdentityPtr identity) const override;
-    QVariant getItem(int idx, QString uuid = "") const;
+    QVariant getItem(int idx, QString uuid = "") const override;
 
 private slots:
     void onTokenCreated(const QString& uuid);
