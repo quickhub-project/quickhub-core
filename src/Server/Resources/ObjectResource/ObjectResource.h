@@ -66,11 +66,34 @@ public:
     virtual QVariantMap         getMetaData() const;
 
     /*!
+        Sets a property filter function. When set, the ObjectAccessProxy will use it
+        to control per-property read/write access.
+    */
+    void setPropertyFilter(PropertyFilterFn filter);
+
+    /*!
+        Returns true if a property filter is active.
+    */
+    bool hasPropertyFilter() const;
+
+    /*!
+        Returns the property filter function (may be empty).
+    */
+    const PropertyFilterFn& propertyFilter() const;
+
+    /*!
         \fn bool ObjectResource::isPermittedToRead(QString token) const
         Overwrite this function and return false when the appropriate user is not permitted to read the data
         in this resource. If false is returned
     */
     virtual bool               isPermittedToRead(QString token) const;
+
+    /*!
+        \fn bool ObjectResource::isPermittedToRead(iIdentityPtr identity) const
+        Overwrite this function and return false when the appropriate user is not permitted to read the data
+        in this resource.
+    */
+    virtual bool               isPermittedToRead(iIdentityPtr identity) const;
 
     /*!
         \fn bool ObjectResource::isPermittedToWrite(QString token) const
@@ -80,6 +103,13 @@ public:
         your own implementation, there is no internal check anymore.
     */
     virtual bool               isPermittedToWrite(QString token) const;
+
+    /*!
+        \fn bool ObjectResource::isPermittedToWrite(iIdentityPtr identity) const
+        Overwrite this function and return false when the appropriate user is not permitted to modify / write the data
+        in this resource.
+    */
+    virtual bool               isPermittedToWrite(iIdentityPtr identity) const;
 
     /*!
         Sets the value of a given property.
@@ -96,6 +126,9 @@ public:
       \sa IResource::setDynamicContent(bool enabled)
     */
     virtual bool                setFilter(QVariantMap query);
+
+private:
+    PropertyFilterFn        _propertyFilter;
 
 protected:
     qint64                  _lastAccess;

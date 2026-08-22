@@ -2,22 +2,29 @@
 #include <QMetaProperty>
 #include <QDateTime>
 
-QObjectResource::QObjectResource(QObject* object, QObject* parent) : ObjectResource(nullptr, parent),
-    _object(object)
+QObjectResource::QObjectResource(QObject* object, QObject* parent) : ObjectResource(nullptr, parent)
 {
     setDynamicContent(false);
-    initObject(_object);
+    initObject(object);
+}
+
+QObjectResource::QObjectResource(QSharedPointer<QObject> object, QObject* parent) : ObjectResource(nullptr, parent)
+{
+    _objectPtr = object;
+    setDynamicContent(false);
+    initObject(object.data());
 }
 
 bool QObjectResource::initObject(QObject *object)
 {
-    if(_initialized)
+    if(_initialized || object == nullptr)
         return false;
 
+    _object = object;
     _changedSlot = metaObject()->method(metaObject()->indexOfSlot("objectPropertyChanged()"));
     auto metaObject = object->metaObject();
     _className = metaObject->className();
-    for(int i = metaObject->propertyOffset(); i < metaObject->propertyCount(); i++)
+    for(int i = 1; i < metaObject->propertyCount(); i++)
     {
         auto property = metaObject->property(i);
         _propertiesByIndex.insert(property.notifySignalIndex(),property);
@@ -34,7 +41,7 @@ bool QObjectResource::initObject(QObject *object)
         }
     }
 
-    connect(object, &QObject::destroyed, _object, [this](){ _object = nullptr; _initialized = false;});
+    connect(object, &QObject::destroyed, this, [this](){ _object = nullptr; _initialized = false;});
     _initialized = true;
     return true;
 }
@@ -75,19 +82,23 @@ IResource::ModificationResult QObjectResource::setProperty(QString name, const Q
 QVariantMap QObjectResource::getObjectData() const
 {
     if(nullptr == _object)
-            return QVariantMap();
+        return QVariantMap();
 
     QVariantMap objectData;
     QMap<QString, QVariant> data = toVariant(_object);
     QMapIterator<QString, QVariant> it(data);
+
+    while(it.hasNext())
     {
-        while(it.hasNext())
-        {
-            it.next();
-            QVariantMap value;
-            value.insert("data",it.value());
-            objectData.insert(it.key(), value);
-        }
+        it.next();
+        QVariant value = it.value();
+
+        if(value.metaType().flags() & QMetaType::IsEnumeration)
+            value = value.toInt();
+
+        QVariantMap entry;
+        entry.insert("data", value);
+        objectData.insert(it.key(), entry);
     }
 
     return objectData;
@@ -123,6 +134,9 @@ void QObjectResource::objectPropertyChanged()
 
     QString name = property.name();
     QVariant value = property.read(object);
+
+    if(value.metaType().flags() & QMetaType::IsEnumeration)
+        value = value.toInt();
 
     Q_EMIT propertyChanged(name, value, iUserPtr());
 }

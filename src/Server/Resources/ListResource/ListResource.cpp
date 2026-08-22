@@ -24,6 +24,21 @@ ListResource::ListResource(IListResourceStorage *storage, QObject *parent) : IRe
         storage->setParent(this);
 }
 
+void ListResource::setPropertyFilter(PropertyFilterFn filter)
+{
+    _propertyFilter = std::move(filter);
+}
+
+bool ListResource::hasPropertyFilter() const
+{
+    return static_cast<bool>(_propertyFilter);
+}
+
+const ListResource::PropertyFilterFn& ListResource::propertyFilter() const
+{
+    return _propertyFilter;
+}
+
 ListResource::~ListResource()
 {
     if(!_listStorage)
@@ -364,7 +379,7 @@ ListResource::ModificationResult ListResource::setProperty(QString property, QVa
 
     iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
 
-    if(!isPermittedToWrite(identity) || !_allowUserAccess) // TODO: call isPermittedToWrite here
+    if(!isPermittedToWrite(identity) || !_allowUserAccess)
     {
         ModificationResult result;
         result.error =  PERMISSION_DENIED;
@@ -384,18 +399,21 @@ IResource::ModificationResult ListResource::setProperty(QString property, QVaria
         return result;
     }
 
-    if(index < 0)
-    {
-        result.error = INVALID_PARAMETERS;
-        return result;
-    }
-
     IListResourceStorage::ItemUID uid;
     uid.index = index;
     uid.uuid = uuid;
 
     // get item to modify
-    QVariantMap item = _listStorage->getItem(uid).toMap();
+    QVariant itemRaw = _listStorage->getItem(uid);
+    if(!itemRaw.isValid())
+    {
+        result.error = INVALID_PARAMETERS;
+        return result;
+    }
+
+    QVariantMap item = itemRaw.toMap();
+
+
     if(!user.isNull())
     {
         item["userid"] = user->identityID();

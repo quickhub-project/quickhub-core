@@ -16,7 +16,8 @@ ImageCollectionHandlerFactory::ImageCollectionHandlerFactory(QObject *parent) : 
 
 QString ImageCollectionHandlerFactory::getResourceID(QString descriptor, QString token) const
 {
-    return ResourceManager::instance()->getResourceID("synclist", descriptor, token);
+    Q_UNUSED(token);
+    return descriptor;
 }
 
 QString ImageCollectionHandlerFactory::resourceTypeIdentifier() const

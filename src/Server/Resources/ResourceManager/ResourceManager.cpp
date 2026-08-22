@@ -32,7 +32,7 @@ void ResourceManager::addResourceFactory(IResourceFactory *factory)
 {
     qInfo()<<"Added Resource factory for: "+ factory->getResourceType()+ (factory->getDescriptorPrefix().isEmpty() ? " (default)" : "; descriptor: " + factory->getDescriptorPrefix());
     factory->setParent(this);
-    _resourceFactorys.insertMulti(factory->getResourceType(), factory);
+    _resourceFactorys.insert(factory->getResourceType(), factory);
 }
 
 resourcePtr ResourceManager::getOrCreateResource(QString type, QString descriptor, QString token, Err::CloudError *error)
@@ -80,11 +80,13 @@ resourcePtr ResourceManager::getOrCreateResource(QString type, QString descripto
 
     resourcePtr resource = factory->createResource(token, descriptor);
 
-    if(!resource.isNull())
+    if(!resource.isNull() && !resource->dynamicContent())
     {
-      //  resource->setParent(this);
-        if(!resource->dynamicContent())
-            addResource(resource, resourceId);
+        addResource(resource, resourceId);
+    }
+
+    if(resource.isNull() && error){
+            *error = Err::INVALID_DATA;
     }
 
     return resource;

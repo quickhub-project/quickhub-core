@@ -6,11 +6,11 @@ DEFINES += NO_PLUGIN
 include(src/SocketApi/SocketApi.pri)
 
 versionAtLeast(QT_VERSION, 5.14.0){
-	DEFINES += \
-		"SKIP_EMPTY_PARTS=Qt::SkipEmptyParts" \
+        DEFINES += \
+	        "SKIP_EMPTY_PARTS=Qt::SkipEmptyParts" \
 }else {
-	DEFINES += \
-		"SKIP_EMPTY_PARTS=QString::SkipEmptyParts" \
+        DEFINES += \
+	        "SKIP_EMPTY_PARTS=QString::SkipEmptyParts" \
 }
 
 !contains(DEFINES, NO_GUI) {
@@ -18,12 +18,12 @@ versionAtLeast(QT_VERSION, 5.14.0){
 QT += gui
 
 SOURCES += \
-	$$PWD/src/Server/Resources/ImageResource/ImageResource.cpp \
+        $$PWD/src/Server/Resources/ImageResource/ImageResource.cpp \
 	$$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.cpp \
 	$$PWD/src/Storage/ImageResourceFilesystemStorage.cpp
 
 HEADERS += \
-	$$PWD/src/Server/Resources/ImageResource/ImageResource.h \
+        $$PWD/src/Server/Resources/ImageResource/ImageResource.h \
 	$$PWD/src/Server/Resources/ImageResource/ImageResourceFactory.h \
 	$$PWD/src/Server/Resources/ImageResource/IImageResourceStorage.h \
 	$$PWD/src/Server/Resources/ImageResource/IImageResourceStorageFactory.h \
@@ -31,8 +31,7 @@ HEADERS += \
 }
 
 SOURCES += $$PWD/src/Server/Authentication/AuthentificationService.cpp \
-	$$PWD/src/Server/Authentication/Controller.cpp \
-	$$PWD/src/Server/Authentication/IIdentitiy.cpp \
+        $$PWD/src/Server/Authentication/IIdentitiy.cpp \
 	$$PWD/src/Server/Authentication/User.cpp \
 	$$PWD/src/Connection/VirtualConnection.cpp \
 	$$PWD/src/Connection/Connection.cpp \
@@ -62,11 +61,12 @@ SOURCES += $$PWD/src/Server/Authentication/AuthentificationService.cpp \
 	$$PWD/src/Storage/ListResourceTemporaryStorage.cpp \
 	$$PWD/src/Server/Authentication/IUser.cpp \
 	$$PWD/src/Server/Authentication/DefaultAuthenticator.cpp \
-	$$PWD/src/Storage/FileSystemLoader.cpp
+	$$PWD/src/Storage/FileSystemLoader.cpp \
+	$$PWD/src/Storage/QObjectResourceFilesystemStorage.cpp \
+	$$PWD/src/Storage/QObjectSerializer.cpp
 
 HEADERS += \
-	$$PWD/src/Server/Authentication/AuthentificationService.h \
-	$$PWD/src/Server/Authentication/Controller.h \
+        $$PWD/src/Server/Authentication/AuthentificationService.h \
 	$$PWD/src/Server/Authentication/IIdentitiy.h \
 	$$PWD/src/Server/Authentication/User.h \
 	$$PWD/src/Connection/VirtualConnection.h \
@@ -107,4 +107,6 @@ HEADERS += \
 	$$PWD/src/Server/Authentication/IAuthenticator.h \
 	$$PWD/src/Server/Authentication/IUser.h \
 	$$PWD/src/Server/Authentication/DefaultAuthenticator.h \
-	$$PWD/src/Storage/FileSystemLoader.h
+	$$PWD/src/Storage/FileSystemLoader.h \
+	$$PWD/src/Storage/QObjectResourceFilesystemStorage.h \
+	$$PWD/src/Storage/QObjectSerializer.h

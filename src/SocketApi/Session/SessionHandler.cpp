@@ -40,8 +40,9 @@ bool SessionHandler::handleRequest(QVariantMap message, ISocket *handle)
         AuthenticationService::ErrorCode error;
         QString token = _authenticationService->login(userId, password, &error);
         QVariantMap answer;
+        answer["errrorcode"] = error;
 
-        if(error == AuthenticationService::NoError)
+        if(error == AuthenticationService::NoError | error == AuthenticationService::PasswordResetRequested)
         {
             auto user =  _authenticationService->getUserForToken(token);
             if(!user.isNull())
@@ -63,7 +64,7 @@ bool SessionHandler::handleRequest(QVariantMap message, ISocket *handle)
             error = AuthenticationService::UnknownInternalError;
         }
 
-        answer["errrorcode"] = error;
+
         answer["command"] = "user:login:failed";
 
         if(error == AuthenticationService::IncorrectPassword)

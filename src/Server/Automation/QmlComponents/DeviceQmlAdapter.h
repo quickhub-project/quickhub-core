@@ -18,7 +18,7 @@ class COREPLUGINSHARED_EXPORT DeviceQmlAdapter : public QQmlPropertyMap
     Q_OBJECT
 
     Q_PROPERTY(QString mapping READ mapping WRITE setMapping NOTIFY deviceMappingChanged)
-    Q_PROPERTY(QString online READ online NOTIFY onlineChanged)
+    Q_PROPERTY(bool online READ online NOTIFY onlineChanged)
     Q_PROPERTY(QQmlListProperty<QObject> children READ children)
     Q_CLASSINFO("DefaultProperty", "children")
 

@@ -10,6 +10,7 @@ ImageCollectionHandler::ImageCollectionHandler(QSharedPointer<ImageResource> res
     _resource( resource)
 {
     connect(_resource.data(), &ImageResource::imageAdded, this, &ImageCollectionHandler::imageAddedSlot);
+    connect(_resource.data(), &ImageResource::imageRemoved, this, &ImageCollectionHandler::imageRemovedSlot);
 }
 
 void ImageCollectionHandler::initHandle(ISocket *handle)
@@ -38,6 +39,16 @@ void ImageCollectionHandler::imageAddedSlot(QString uuid)
     item["uid"] = uuid;
     QVariantMap parameters;
     parameters["data"] = item;
+    msg["parameters"] = parameters;
+    deployToAll(msg);
+}
+
+void ImageCollectionHandler::imageRemovedSlot(QString uuid)
+{
+    QVariantMap msg;
+    msg["command"] = "imgcoll:removed";
+    QVariantMap parameters;
+    parameters["uid"] = uuid;
     msg["parameters"] = parameters;
     deployToAll(msg);
 }

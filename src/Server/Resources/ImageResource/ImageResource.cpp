@@ -10,6 +10,7 @@
 #include <QUuid>
 
 ImageResource::ImageResource(IImageResourceStorage* storage, QObject* parent): IResource("", parent),
+_lastAccess(QDateTime::currentMSecsSinceEpoch()),
 _listStorage(storage)
 {
 }
@@ -43,6 +44,8 @@ IResource::ModificationResult ImageResource::insert(QImage image, QVariant data,
     bool success = _listStorage->insertImage(image, item, id);
     _lock.unlock();
 
+    _lastAccess = QDateTime::currentMSecsSinceEpoch();
+
     if(!success)
         result.error = STORAGE_ERROR;
     else
@@ -67,8 +70,12 @@ IResource::ModificationResult ImageResource::deleteImage(QString uid, QString to
     bool success =_listStorage->deleteImage(uid);
     _lock.unlock();
 
+    _lastAccess = QDateTime::currentMSecsSinceEpoch();
+
     if(!success)
         result.error = STORAGE_ERROR;
+    else
+        Q_EMIT imageRemoved(uid);
 
     return result;
 }
@@ -82,6 +89,7 @@ QStringList ImageResource::getAllImageIds(QString token)
         //todo error handling
         return QStringList();
     }
+    _lastAccess = QDateTime::currentMSecsSinceEpoch();
     QReadLocker locker(&_lock);
     return _listStorage->getAllImageIds();
 }
@@ -96,6 +104,7 @@ QImage ImageResource::getImage(QString id, QString token)
         return QImage();
     }
 
+    _lastAccess = QDateTime::currentMSecsSinceEpoch();
     QReadLocker locker(&_lock);
     return _listStorage->getImage(id);
 }

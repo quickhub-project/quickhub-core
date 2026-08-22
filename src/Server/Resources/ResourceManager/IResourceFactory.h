@@ -92,7 +92,7 @@ public:
     virtual QString generateQualifiedResourceName(QString descriptor, iIdentityPtr  user) const
     {
         descriptor = descriptor.replace(".","/");
-        QStringList tokens = descriptor.split("/",  SKIP_EMPTY_PARTS);
+        QStringList tokens = descriptor.split("/", Qt::SkipEmptyParts);
         if(tokens[0] == "home" && !user.isNull())
         {
             tokens.insert(1, user->identityID());
@@ -104,7 +104,11 @@ public:
 
     virtual QString generateQualifiedResourceName(QString descriptor, QString token) const
     {
-        iIdentityPtr  user = AuthenticationService::instance()->validateToken(token);
+        iIdentityPtr  user = nullptr;
+        if(!token.isEmpty())
+        {
+            AuthenticationService::instance()->validateToken(token);
+        }
         return generateQualifiedResourceName(descriptor, user);
     }
 

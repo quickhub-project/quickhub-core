@@ -1,0 +1,135 @@
+---
+# .clang-format configuration for 2log.io C++ project
+# Based on Qt coding style with some modifications
+
+# Language
+Language: Cpp
+Standard: c++17
+
+# Basic settings
+BasedOnStyle: WebKit
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 120
+
+# Indentation
+IndentCaseLabels: false
+IndentPPDirectives: AfterHash
+IndentWrappedFunctionNames: false
+NamespaceIndentation: None
+AccessModifierOffset: -4
+
+# Alignment
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Left
+AlignOperands: true
+AlignTrailingComments: true
+
+# Allow options
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Break settings
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: true
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: true
+
+# Bin packing
+BinPackArguments: true
+BinPackParameters: true
+
+# Comments
+CommentPragmas: '^ IWYU pragma:'
+ReflowComments: true
+
+# Constructor initializers
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+
+# Cpp11
+Cpp11BracedListStyle: true
+
+# Includes
+IncludeBlocks: Preserve
+# Qt-specific: Don't sort includes as Qt has specific order requirements for MOC-generated files
+SortIncludes: false
+IncludeCategories:
+  # Qt headers
+  - Regex: '^<Q.*>'
+    Priority: 2
+  # C system headers
+  - Regex: '^<.*\.h>'
+    Priority: 1
+  # C++ standard library headers
+  - Regex: '^<.*>'
+    Priority: 3
+  # Local headers
+  - Regex: '.*'
+    Priority: 4
+
+# Pointer alignment
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# Spaces
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Other settings
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: false
+PenaltyBreakAssignment: 2
+PenaltyBreakBeforeFirstCallParameter: 19
+PenaltyBreakComment: 300
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 60
+
+# Macros
+MacroBlockBegin: "^Q_OBJECT$|^Q_GADGET$|^Q_PROPERTY$|^Q_ENUM$|^Q_FLAG$|^Q_INTERFACES$|^Q_PLUGIN_METADATA$"
+MacroBlockEnd: ""
+
+# Pack constructor initializers
+PackConstructorInitializers: Never
+...

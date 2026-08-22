@@ -15,6 +15,7 @@ class IObjectResourceStorage : public QObject
 
 public:
     explicit IObjectResourceStorage(QObject *parent = nullptr) : QObject(parent = nullptr){}
+
     virtual bool        insertProperty(QString, QVariant) = 0;
     virtual bool        sync() = 0; // to write unsaved
     virtual bool        setMetadata(QVariant metadata) = 0;

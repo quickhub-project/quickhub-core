@@ -8,12 +8,14 @@
 #define SYNCHRONIZEDLISTBACKEND_H
 
 #include <QObject>
+#include <functional>
 #include "Connection/VirtualConnection.h"
 #include "Server/Resources/ListResource/ListResource.h"
 #include <QVariant>
 
 #include "../../SocketCore/IResourceHandler.h"
 
+class ListAccessProxy;
 
 class SynchronizedListHandler : public IResourceHandler
 {
@@ -28,9 +30,11 @@ public:
 
 private:
     QSharedPointer<ListResource> _resource;
+    ListAccessProxy* _proxy;
     // checks if item at index has correct uuid. if not, the correct index will be searched.
     int getIndexForUUID(QString UUID);
     void handleMessage(QVariant message, ISocket* handle) override;
+    void deployToAllFiltered(QVariantMap msg, std::function<QVariantMap(QVariantMap, iIdentityPtr)> filterFn);
 
 private slots:
     void metadataChanged();

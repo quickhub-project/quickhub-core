@@ -27,6 +27,12 @@ class IUser : public QObject, public IIdentity
 
 public:
 
+    enum class CheckPasswortResult{
+        PASSWORD_WRONG = -1,
+        PASSWORD_OK = 0,
+        PASSSWORD_RESET_REQUESTED = 1
+    };
+
     struct UserData
     {
         QString name;
@@ -100,7 +106,7 @@ public:
         This function must be implemented if you want to work with your own user objects. Return true if
         the given password to this user is correct.
     */
-    virtual bool            checkPassword(QString password) = 0;
+    virtual CheckPasswortResult checkPassword(QString password) = 0;
 
     /*!
         \fn QSet<QString> IUser::setPassword(QString password) const

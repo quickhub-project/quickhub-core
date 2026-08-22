@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QMetaProperty>
 #include "ListResource.h"
+#include <QPointer>
 
 class QObjectListResource : public ListResource
 {
@@ -16,15 +17,17 @@ public:
 
     bool                            appendObject(QObject* object);
     bool                            removeObject(QObject* object);
-    virtual int                     getCount() const override;
-    virtual QVariantMap             getMetadata() const override;
-    virtual QVariantList            getListData() const override;
-    QVariant                        getItem(int idx, QString uuid = "") const override;
-    virtual ModificationResult      setProperty(QString property, QVariant data, int index, QString uuid, QString token) override;
     QList<QObject*>                 getObjects() const;
+    int                             getCount() const override;
+    QVariantMap                     getMetadata() const override;
+    QVariantList                    getListData() const override;
+    QVariant                        getItem(int idx, QString uuid = "") const override;
+    ModificationResult              setProperty(QString property, QVariant data, int index, QString uuid, QString token) override;
 	QObject*						getObject(int idx, QString uuid = "") const;
+    void                            setResourceProperties(QStringList properties);
+    void setClassName(const QString &newClassName);
 
-protected: 
+protected:
     QVariantMap                     toVariant(QObject* object) const;
 
 private:
@@ -32,8 +35,10 @@ private:
     void                            connectObject(QObject* object);
     void                            disconnectObject(QObject* object);
 
+    QStringList                     _resourceProperties;
     bool                            _initialized = false;
-    QList<QObject*>                 _items;
+    QList<QPointer<QObject>>        _items;
+    QList<QObject*>                 _rawPtrs;
     QMap<int, QMetaProperty>        _propertiesByIndex;
     QMap<QString, QMetaProperty>    _propertiesByName;
     QMetaMethod                     _changedSlot;
