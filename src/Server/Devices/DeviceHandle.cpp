@@ -692,6 +692,11 @@ void DeviceHandle::deviceDeregistered(QString uuid)
 
     save();
 
+    // Hold on to the device until this slot returns. We are very likely the last owner,
+    // and dropping the reference inside the locked section would run a foreign destructor
+    // under our own write lock - with an unknown amount of re-entrancy behind it.
+    QSharedPointer<IDevice> device;
+
     {
         QWriteLocker locker(&_lock);
         _lastOnline = QDateTime::currentMSecsSinceEpoch();
@@ -699,7 +704,7 @@ void DeviceHandle::deviceDeregistered(QString uuid)
 
         AuthenticationService::instance()->logout(_token);
 
-        _device = nullptr;
+        device.swap(_device);
     }
 
     Q_EMIT deviceStateChanged(_uuid, IDevice::OFFLINE);

@@ -102,7 +102,7 @@ CreateTokenResult ApiTokenManager::createToken(const QString& name, const QStrin
     QString token = getRandomString(128);
 
     // Create an identity that represents the API token's permissions.
-    auto* identity = new ApiTokenIdentity(uuid, name, description, permissions, expirationDate, this);
+    auto* identity = new ApiTokenIdentity(uuid, name, description, permissions, expirationDate);
     auto identityPtr = QSharedPointer<IIdentity>(identity);
 
     AuthenticationService::ErrorCode error = AuthenticationService::instance()->registerToken(token, identityPtr);
@@ -249,7 +249,7 @@ void ApiTokenManager::loadAndRegisterTokens()
         }
 
         auto* identity = new ApiTokenIdentity(record.uuid, record.name, record.description,
-                                              record.permissions, record.expirationDate, this);
+                                              record.permissions, record.expirationDate);
         auto identityPtr = QSharedPointer<IIdentity>(identity);
 
         AuthenticationService::ErrorCode error = AuthenticationService::instance()->registerToken(record.token, identityPtr);
