@@ -73,9 +73,17 @@ resourcePtr ResourceManager::getOrCreateResource(QString type, QString descripto
         return resourcePtr(nullptr);
 
     QWriteLocker locker(&_resourceMutex);
-    if(_resources.contains(resourceId))
+    auto it = _resources.constFind(resourceId);
+    if(it != _resources.constEnd())
     {
-        return _resources.value(resourceId);
+        resourcePtr cached = it.value();
+        if(!cached.isNull())
+            return cached;
+
+        // The resource has already been destroyed, but the removal of its map entry is
+        // still queued (resources usually die in the thread that used them last).
+        // Drop the stale entry and create a new instance instead of handing out null.
+        _resources.remove(resourceId);
     }
 
     resourcePtr resource = factory->createResource(token, descriptor);
@@ -152,9 +160,12 @@ IResourceFactory *ResourceManager::getResourceFactory(QString type, QString desc
 void ResourceManager::resourceDestroyed(QString descriptor)
 {
     _resourceMutex.lockForWrite();
-    _resources.remove(descriptor);
+    auto it = _resources.constFind(descriptor);
+    // Only drop the entry when it still refers to the destroyed instance. Since this slot
+    // can be invoked queued, a new instance may already have been registered in the meantime.
+    if(it != _resources.constEnd() && it.value().isNull())
+        _resources.remove(descriptor);
     _resourceMutex.unlock();
-
 }
 
 
