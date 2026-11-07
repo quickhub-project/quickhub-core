@@ -107,7 +107,7 @@ public:
         iIdentityPtr  user = nullptr;
         if(!token.isEmpty())
         {
-            AuthenticationService::instance()->validateToken(token);
+            user = AuthenticationService::instance()->validateToken(token);
         }
         return generateQualifiedResourceName(descriptor, user);
     }
