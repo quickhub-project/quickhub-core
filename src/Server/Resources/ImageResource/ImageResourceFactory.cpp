@@ -47,6 +47,12 @@ resourcePtr ImageResourceFactory::createResource(QString token, QString descript
         qInfo()<<"Create ListResource with FS Resource Handler"<<resourceName;
     }
 
+    if(nullptr == storage)
+    {
+        qCritical()<<"Could not create a storage for image collection"<<resourceName;
+        return resourcePtr();
+    }
+
     return resourcePtr(new ImageResource(storage, parent));
 }
 
