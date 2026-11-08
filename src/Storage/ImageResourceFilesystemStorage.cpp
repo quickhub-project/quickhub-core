@@ -51,7 +51,7 @@ bool ImageResourceFilesystemStorage::deleteImage(QString uid)
     _images.remove(uid);
     _metadata.remove(uid);
 
-    // Without this the image file would survive and getImage() would keep serving it
+    // getImage() reads straight from disk, so the file has to go as well
     QString filename = FileSystemPaths::instance()->getStoragePath()+_resourceName+"/"+uid;
     if(QFile::exists(filename) && !QFile::remove(filename))
         qCritical()<<"Could not remove file: "<<filename;

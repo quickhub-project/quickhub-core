@@ -80,9 +80,8 @@ resourcePtr ResourceManager::getOrCreateResource(QString type, QString descripto
         if(!cached.isNull())
             return cached;
 
-        // The resource has already been destroyed, but the removal of its map entry is
-        // still queued (resources usually die in the thread that used them last).
-        // Drop the stale entry and create a new instance instead of handing out null.
+        // Entry of an already destroyed resource whose removal is still queued -
+        // resources usually die in the thread that used them last.
         _resources.remove(resourceId);
     }
 
