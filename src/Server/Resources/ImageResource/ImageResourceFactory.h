@@ -23,7 +23,6 @@ public:
 
 private:
     resourcePtr createResource(QString token, QString descriptor, QObject *parent) override;
-    // Must be initialized here - the ImageResourceFactory(QObject*) ctor doesn't set it
     IImageResourceStorageFactory* _alternativeStorageFactory = nullptr;
 };
 
