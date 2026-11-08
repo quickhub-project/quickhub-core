@@ -62,16 +62,41 @@ QVariantMap ObjectResource::getMetaData() const
     return _storage->getMetadata().toMap();
 }
 
+void ObjectResource::setPropertyFilter(PropertyFilterFn filter)
+{
+    _propertyFilter = std::move(filter);
+}
+
+bool ObjectResource::hasPropertyFilter() const
+{
+    return static_cast<bool>(_propertyFilter);
+}
+
+const ObjectResource::PropertyFilterFn& ObjectResource::propertyFilter() const
+{
+    return _propertyFilter;
+}
+
 bool ObjectResource::isPermittedToRead(QString token) const
 {
     iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
     return !user.isNull();
 }
 
+bool ObjectResource::isPermittedToRead(iIdentityPtr identity) const
+{
+    return !identity.isNull();
+}
+
 bool ObjectResource::isPermittedToWrite(QString token) const
 {
     iIdentityPtr user = AuthenticationService::instance()->validateToken(token);
     return !user.isNull();
+}
+
+bool ObjectResource::isPermittedToWrite(iIdentityPtr identity) const
+{
+    return !identity.isNull();
 }
 
 ObjectResource::ModificationResult ObjectResource::setProperty(QString name, const QVariant &value, QString token)

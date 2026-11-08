@@ -32,7 +32,7 @@ void ResourceManager::addResourceFactory(IResourceFactory *factory)
 {
     qInfo()<<"Added Resource factory for: "+ factory->getResourceType()+ (factory->getDescriptorPrefix().isEmpty() ? " (default)" : "; descriptor: " + factory->getDescriptorPrefix());
     factory->setParent(this);
-    _resourceFactorys.insertMulti(factory->getResourceType(), factory);
+    _resourceFactorys.insert(factory->getResourceType(), factory);
 }
 
 resourcePtr ResourceManager::getOrCreateResource(QString type, QString descriptor, QString token, Err::CloudError *error)
@@ -73,18 +73,27 @@ resourcePtr ResourceManager::getOrCreateResource(QString type, QString descripto
         return resourcePtr(nullptr);
 
     QWriteLocker locker(&_resourceMutex);
-    if(_resources.contains(resourceId))
+    auto it = _resources.constFind(resourceId);
+    if(it != _resources.constEnd())
     {
-        return _resources.value(resourceId);
+        resourcePtr cached = it.value();
+        if(!cached.isNull())
+            return cached;
+
+        // Entry of an already destroyed resource whose removal is still queued -
+        // resources usually die in the thread that used them last.
+        _resources.remove(resourceId);
     }
 
     resourcePtr resource = factory->createResource(token, descriptor);
 
-    if(!resource.isNull())
+    if(!resource.isNull() && !resource->dynamicContent())
     {
-      //  resource->setParent(this);
-        if(!resource->dynamicContent())
-            addResource(resource, resourceId);
+        addResource(resource, resourceId);
+    }
+
+    if(resource.isNull() && error){
+            *error = Err::INVALID_DATA;
     }
 
     return resource;
@@ -150,9 +159,12 @@ IResourceFactory *ResourceManager::getResourceFactory(QString type, QString desc
 void ResourceManager::resourceDestroyed(QString descriptor)
 {
     _resourceMutex.lockForWrite();
-    _resources.remove(descriptor);
+    auto it = _resources.constFind(descriptor);
+    // Only drop the entry when it still refers to the destroyed instance. Since this slot
+    // can be invoked queued, a new instance may already have been registered in the meantime.
+    if(it != _resources.constEnd() && it.value().isNull())
+        _resources.remove(descriptor);
     _resourceMutex.unlock();
-
 }
 
 

@@ -207,7 +207,7 @@ IDevice::DeviceError SocketDevice::initDevice(QVariantMap properties)
         QString funcName = getPropertySetterFunc(it.key());
 
         if(!_functionParameters.contains(funcName))
-            break;
+            continue;
 
         function["func"] =  funcName;
         QVariantMap value;

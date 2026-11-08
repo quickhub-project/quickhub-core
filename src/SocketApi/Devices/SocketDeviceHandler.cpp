@@ -30,7 +30,7 @@ bool SocketDeviceHandler::handleRequest(QVariantMap message, ISocket *socket)
             // checked BEFORE an authenticated device is kicked out of the session by
             // an unauthenticated device.
             deviceHandlePtr handle = DeviceManager::instance()->getHandle(uuid);
-            if(handle->getAuthentificationKey() != authkey)
+            if(handle.isNull() || handle->getAuthentificationKey() != authkey)
             {
                 qWarning() << "Unauthenticated device has tried to log in!";
                 return true;

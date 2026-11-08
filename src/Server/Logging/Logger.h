@@ -10,40 +10,51 @@
 #include <QObject>
 #include "qhcore_global.h"
 #include <QDateTime>
+#include <cstdio>
 
 class Logger
 {
-
 public:
     static void handleMessage(QtMsgType type, const QMessageLogContext &context, const QString &msg)
     {
-        Q_UNUSED(context)
-        QByteArray localMsg = msg.toLocal8Bit();
-        QByteArray time = QDateTime::currentDateTime().toString("dd.MM. - hh:mm:ss:zzz").toLocal8Bit();
+        const QByteArray time     = QDateTime::currentDateTime()
+        .toString("dd.MM. hh:mm:ss.zzz")
+            .toLocal8Bit();
+        const QByteArray message  = msg.toLocal8Bit();
+        const QByteArray category = (context.category && qstrlen(context.category) > 0
+                                     && qstrcmp(context.category, "default") != 0)
+                                        ? QByteArray("[") + context.category + "] "
+                                        : QByteArray();
+
+               // ANSI color codes
+        const char* reset  = "\033[0m";
+        const char* bold   = "\033[1m";
+
+        const char* color;
+        const char* label;
 
         switch (type)
         {
-            case QtDebugMsg:
-
-                fprintf(stderr, "[%s %s] -- %s\n" , "DEBUG   ", time.constData(), localMsg.constData());
-                break;
-
-            case QtInfoMsg:
-                fprintf(stderr, "[%s %s] -- %s\n" , "INFO    ", time.constData(), localMsg.constData());
-                break;
-
-            case QtWarningMsg:
-                fprintf(stderr, "[%s %s] -- %s\n" , "WARNING ", time.constData(), localMsg.constData());
-                break;
-
-            case QtCriticalMsg:
-                fprintf(stderr, "[%s %s] -- %s\n" , "CRITICAL", time.constData(), localMsg.constData());
-                break;
-
-            case QtFatalMsg:
-                fprintf(stderr, "[%s %s] -- %s\n" , "FATAL", time.constData(), localMsg.constData());
-                break;
+        case QtDebugMsg:    color = "\033[36m";    label = "DEBUG   "; break;  // Cyan
+        case QtInfoMsg:     color = "\033[32m";    label = "INFO    "; break;  // Green
+        case QtWarningMsg:  color = "\033[33m";    label = "WARNING "; break;  // Yellow
+        case QtCriticalMsg: color = "\033[31m";    label = "CRITICAL"; break;  // Red
+        case QtFatalMsg:    color = "\033[35m";    label = "FATAL   "; break;  // Magenta
+        default:            color = reset;          label = "UNKNOWN "; break;
         }
+
+
+        const QByteArray rawCat = (context.category && qstrlen(context.category) > 0
+                                   && qstrcmp(context.category, "default") != 0)
+                                      ? QByteArray(context.category)
+                                      : QByteArray("default");
+
+        fprintf(stderr, "%s%s%s %s| %-30s | %s%s\n",
+                color, bold, label,
+                time.constData(),
+                rawCat.constData(),   // %-20s paddet rechts mit Leerzeichen
+                message.constData(),
+                reset);
     }
 };
 

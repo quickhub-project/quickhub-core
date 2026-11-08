@@ -12,7 +12,12 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QVariant>
+#include <QSharedPointer>
+#include <functional>
 #include "qhcore_global.h"
+
+class IIdentity;
+using iIdentityPtr = QSharedPointer<IIdentity>;
 
 class ResourceManager;
 class COREPLUGINSHARED_EXPORT IResource : public QObject
@@ -33,6 +38,13 @@ public:
     };
 
     Q_ENUM (ResourceError)
+
+    struct PropertyAccess {
+        bool canRead = true;
+        bool canWrite = true;
+    };
+
+    using PropertyFilterFn = std::function<PropertyAccess(iIdentityPtr identity, const QString& property)>;
 
     /*!
         \struct IResource::ModificationResult

@@ -9,15 +9,23 @@
 #define SOCKETOBJECTHANDLER_H
 
 #include <QObject>
+#include <functional>
 #include "SocketCore/IResourceHandler.h"
 #include "Connection/VirtualConnection.h"
 #include "Server/Resources/ObjectResource/ObjectResource.h"
+#include "Server/Resources/ObjectResource/ObjectAccessProxy.h"
 
 class SynchronizedObjectHandler : public IResourceHandler
 {
     Q_OBJECT
 
 public:
+    struct PropertyChangeEvent
+    {
+        QString property;
+        QVariant data;
+        iIdentityPtr user;
+    };
     explicit SynchronizedObjectHandler(QSharedPointer<ObjectResource> resource = QSharedPointer<ObjectResource> (nullptr));
     ~SynchronizedObjectHandler() override;
     void initHandle(ISocket* handle) override;
@@ -26,7 +34,8 @@ public:
 
 private:
     QSharedPointer<ObjectResource> _resource;
-    QList<ISocket*> _handles;
+    ObjectAccessProxy* _proxy;
+    void deployToAllFiltered(QVariantMap msg, std::function<QVariantMap(QVariantMap, iIdentityPtr)> filterFn);
 
 signals:
 

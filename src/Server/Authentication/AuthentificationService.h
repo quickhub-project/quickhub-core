@@ -23,6 +23,7 @@
 #include <QVector>
 #include <QMap>
 #include <QTimer>
+#include <QPointer>
 #include <QSharedPointer>
 #include <QReadWriteLock>
 #include "qhcore_global.h"
@@ -67,6 +68,7 @@ public:
 
     enum ErrorCode
     {
+        PasswordResetRequested = 1,
         NoError = 0,
         UserAlreadyExists = -1,
         IncompleteData = - 2,
@@ -91,6 +93,8 @@ public:
         \sa AuthenticationService::getUserForToken()
     */
     iIdentityPtr validateToken(QString token);
+
+    bool isValidToken(QString token);
 
     iUserPtr validateUser(QString userID, QString password, ErrorCode* error = nullptr) const;
 
@@ -120,6 +124,13 @@ public:
     QString login(iIdentityPtr identity, ErrorCode *error = nullptr);
 
     /*!
+        \fn QString registerToken(QString token, iIdentityPtr identity, ErrorCode *error = nullptr)
+        Like login(iIdentityPtr), but uses a predetermined token instead of generating a new UUID.
+        This is needed so that the same token value can be re-registered after a server restart.
+    */
+    AuthenticationService::ErrorCode registerToken(QString token, iIdentityPtr identity);
+
+    /*!
         \fn bool logout(QString token)
         Will remove the session and invalidate the token.
     */
@@ -146,7 +157,10 @@ private slots:
     void checkTimeouts();
 
 private:
-    QList<IAuthenticator*> _authenticators;
+    iUserPtr getUserForUserID_locked(QString userID) const;
+    iUserPtr validateUser_locked(QString userID, QString password, ErrorCode* error) const;
+
+    QList<QPointer<IAuthenticator>> _authenticators;
     mutable QReadWriteLock _lock;
     QHash<QString, iIdentityPtr> _tokenToUserMap;
     QHash<QString, qint64> _tokenToExpiration;

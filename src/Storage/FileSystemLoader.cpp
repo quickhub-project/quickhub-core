@@ -5,9 +5,20 @@
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
 #include "FileSystemLoader.h"
-#include <QDebug>
-#include <QFileInfo>
+
 #include <QDir>
+#include <QFileInfo>
+#include <QLoggingCategory>
+
+// ----------------------------------------------------------------------------
+// Logging
+// ----------------------------------------------------------------------------
+
+Q_LOGGING_CATEGORY(lcFileSystemLoader, "quickhub.filesystemloader")
+
+// ----------------------------------------------------------------------------
+// Lifecycle
+// ----------------------------------------------------------------------------
 
 FileSystemLoader::FileSystemLoader(QString path, QObject *parent) : QObject(parent),
     _resourcePath(path),
@@ -17,6 +28,10 @@ FileSystemLoader::FileSystemLoader(QString path, QObject *parent) : QObject(pare
 
 QVariantMap FileSystemLoader::load()
 {
+    if(! _file.exists()) {
+        qCInfo(lcFileSystemLoader) << "Could not open file for loading:" << _resourcePath << "- File does not exist yet";
+        return QVariantMap();
+    }
     if( _file.open(QFile::ReadOnly))
     {
         QVariantMap file =  QJsonDocument::fromJson(_file.readAll()).toVariant().toMap();
@@ -25,7 +40,7 @@ QVariantMap FileSystemLoader::load()
     }
     else
     {
-        qDebug()<<"Warning: Could not open File:  "<<_resourcePath<<" - "<<_file.errorString();
+        qCWarning(lcFileSystemLoader) << "Could not open file for loading:" << _resourcePath << "-" << _file.errorString();
         return QVariantMap();
     }
 }
@@ -51,7 +66,7 @@ bool FileSystemLoader::save(QVariantMap data)
     }
     else
     {
-        qDebug()<<"Warning: Could not open file -"<<_file.errorString();
+        qCWarning(lcFileSystemLoader) << "Could not open file for saving:" << _file.fileName() << "-" << _file.errorString();
         return false;
     }
     return true;

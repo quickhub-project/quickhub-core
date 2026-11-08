@@ -20,8 +20,11 @@ ImageResourceFilesystemStorage::ImageResourceFilesystemStorage(QString qualified
 bool ImageResourceFilesystemStorage::insertImage(QImage image, QVariantMap metadata, QString uid)
 {
     load();
-    if(!_images.contains(uid))
+    // _metadata is the persisted index - _images is only an in-memory cache and is
+    // empty after this storage has been recreated for a new request.
+    if(!_metadata.contains(uid))
     {
+        // also creates the storage directory for the image file written below
         save();
         QString filename = FileSystemPaths::instance()->getStoragePath()+ _resourceName+"/"+uid;
         if(image.save(filename))
@@ -42,18 +45,24 @@ bool ImageResourceFilesystemStorage::insertImage(QImage image, QVariantMap metad
 bool ImageResourceFilesystemStorage::deleteImage(QString uid)
 {
     load();
-    if(!_images.contains(uid))
+    if(!_metadata.contains(uid))
         return false;
 
     _images.remove(uid);
     _metadata.remove(uid);
+
+    // getImage() reads straight from disk, so the file has to go as well
+    QString filename = FileSystemPaths::instance()->getStoragePath()+_resourceName+"/"+uid;
+    if(QFile::exists(filename) && !QFile::remove(filename))
+        qCritical()<<"Could not remove file: "<<filename;
+
     return save();
 }
 
 QStringList ImageResourceFilesystemStorage::getAllImageIds()
 {
     load();
-    return _images.keys();
+    return _metadata.keys();
 }
 
 QVariant ImageResourceFilesystemStorage::getMetadata(QString uid)

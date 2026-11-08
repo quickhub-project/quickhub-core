@@ -36,7 +36,7 @@ resourcePtr ImageResourceFactory::createResource(QString token, QString descript
     IImageResourceStorage* storage = nullptr;
 
     // default implementation
-    if(nullptr == _alternativeStorageFactory)
+    if(nullptr != _alternativeStorageFactory)
     {
         qInfo()<< "Create ListResource with external storage plugin.";
         storage = _alternativeStorageFactory->createInstance(resourceName, nullptr);
@@ -45,6 +45,12 @@ resourcePtr ImageResourceFactory::createResource(QString token, QString descript
     {
         storage = new ImageResourceFilesystemStorage(resourceName, nullptr);
         qInfo()<<"Create ListResource with FS Resource Handler"<<resourceName;
+    }
+
+    if(nullptr == storage)
+    {
+        qCritical()<<"Could not create a storage for image collection"<<resourceName;
+        return resourcePtr();
     }
 
     return resourcePtr(new ImageResource(storage, parent));

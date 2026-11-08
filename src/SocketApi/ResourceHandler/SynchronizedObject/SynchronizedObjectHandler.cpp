@@ -7,9 +7,11 @@
 
 #include "SynchronizedObjectHandler.h"
 #include "Server/Authentication/User.h"
-
+#include "Server/Authentication/AuthentificationService.h"
+#include <QMap>
 SynchronizedObjectHandler::SynchronizedObjectHandler(QSharedPointer<ObjectResource> resource) : IResourceHandler(resource->getResourceType(), resource.data()),
-    _resource(resource)
+    _resource(resource),
+    _proxy(new ObjectAccessProxy(resource, this))
 {
     connect(_resource.data(), &ObjectResource::propertyChanged, this, &SynchronizedObjectHandler::propertyChanged);
     connect(_resource.data(), &ObjectResource::sendEvent, this, &SynchronizedObjectHandler::sendEvent);
@@ -24,8 +26,15 @@ void SynchronizedObjectHandler::initHandle(ISocket *handle)
     QVariantMap msg;
     msg["command"] = "object:dump";
     QVariantMap parameters;
-    parameters["data"] = _resource->getObjectData();
-    parameters["metadata"] = _resource->getMetaData();
+    QString token = _tokenToHandleMap.key(handle);
+    iIdentityPtr identity = AuthenticationService::instance()->validateToken(token);
+    if(identity.isNull())
+    {
+        qWarning() << "SynchronizedObjectHandler::initHandle - invalid identity for handle";
+        return;
+    }
+    parameters["data"] = _proxy->getObjectData(identity);
+    parameters["metadata"] = _proxy->getMetaData();
     msg["parameters"] = parameters;
     handle->sendVariant(msg);
 }
@@ -37,7 +46,7 @@ bool SynchronizedObjectHandler::dynamicContent() const
 
 bool SynchronizedObjectHandler::isPermitted(QString token) const
 {
-    return _resource->isPermittedToRead(token);
+    return _proxy->isPermittedToRead(AuthenticationService::instance()->validateToken(token));
 }
 
 void SynchronizedObjectHandler::propertyChanged(QString property, QVariant data, iIdentityPtr user)
@@ -49,7 +58,22 @@ void SynchronizedObjectHandler::propertyChanged(QString property, QVariant data,
     parameters["property"] = property;
     parameters["data"] =  data;
     msg["parameters"] = parameters;
-    deployToAll(msg);
+
+    if (!_resource->hasPropertyFilter())
+    {
+        deployToAll(msg);
+        return;
+    }
+
+    for (ISocket* handle : _handles)
+    {
+        QString handleToken = _tokenToHandleMap.key(handle);
+        iIdentityPtr identity = AuthenticationService::instance()->validateToken(handleToken);
+        if (!identity.isNull() && _proxy->canReadProperty(property, identity))
+        {
+            handle->sendVariant(msg);
+        }
+    }
 }
 
 void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
@@ -65,9 +89,13 @@ void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
     if(command == "object:property:set")
     {
         QString property = parameters["property"].toString();
+        QMap<QString,PropertyChangeEvent> events;
+        QObject tmp;
         disconnect(_resource.data(), &ObjectResource::propertyChanged, this, &SynchronizedObjectHandler::propertyChanged);
-        ObjectResource::ModificationResult result = _resource->setProperty(property, data, token);
+        connect(_resource.data(), &ObjectResource::propertyChanged, &tmp, [&events](QString property, QVariant data, iIdentityPtr user){events.insert(property, PropertyChangeEvent{property, data, user});});
+        ObjectResource::ModificationResult result = _proxy->setProperty(property, data, token);
         connect(_resource.data(), &ObjectResource::propertyChanged, this, &SynchronizedObjectHandler::propertyChanged);
+        events.remove(property);
 
         parameters["data"] = result.data;
         msg["parameters"] = parameters;
@@ -76,14 +104,20 @@ void SynchronizedObjectHandler::handleMessage(QVariant message, ISocket *handle)
         if(result.error == ObjectResource::NO_ERROR)
         {
             deployToAll(msg, handle);
-            return;
+        }
+
+        for (auto [key, value] : events.asKeyValueRange()) {
+            qDebug()<<"Other Prop Changes:"<<value.property;
+            propertyChanged(value.property, value.data, value.user);
         }
     }
 
     if(command == "object:filter")
     {
         if(_resource->dynamicContent())
+        {
             _resource->setFilter(data.toMap());
+        }
     }
 }
 
@@ -95,4 +129,17 @@ void SynchronizedObjectHandler::sendEvent(QVariantMap data)
     parameters["data"] =  data;
     msg["parameters"] = parameters;
     deployToAll(msg);
+}
+
+void SynchronizedObjectHandler::deployToAllFiltered(QVariantMap msg, std::function<QVariantMap(QVariantMap, iIdentityPtr)> filterFn)
+{
+    for (ISocket* handle : _handles)
+    {
+        QString handleToken = _tokenToHandleMap.key(handle);
+        iIdentityPtr identity = AuthenticationService::instance()->validateToken(handleToken);
+        if(identity.isNull())
+            continue;
+        QVariantMap filtered = filterFn(msg, identity);
+        handle->sendVariant(filtered);
+    }
 }

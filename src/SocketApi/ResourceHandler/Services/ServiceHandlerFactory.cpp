@@ -4,21 +4,8 @@
  * It is part of the QuickHub framework - www.quickhub.org
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
-#include "Controller.h"
+#include "ServiceHandlerFactory.h"
 
-Controller::Controller(QObject *parent) : QObject(parent)
+ServiceHandlerFactory::ServiceHandlerFactory(QObject *parent) : QObject(parent)
 {
-
-}
-
-
-bool Controller::isAuthorizedTo(QString permission)
-{
-    return _permissions.value(permission, false);
-}
-
-QString Controller::identityID() const
-{
-    return _identityID;
-
 }

@@ -5,6 +5,7 @@
  * Copyright (C) 2021 by Friedemann Metzger - mail@friedemann-metzger.de */
 
 #include "DeviceHandleListWrapper.h"
+#include <algorithm>
 
 DeviceHandleListWrapper::DeviceHandleListWrapper(QObject* parent) : IList(parent)
 {
@@ -113,6 +114,6 @@ int DeviceHandleListWrapper::getIndex(QString uuid) const
         return -1;
 
     QList<QString> keys = _devices.keys();
-    auto i = qBinaryFind(keys.begin(), keys.end(), uuid);
+    auto i = std::lower_bound(keys.begin(), keys.end(), uuid);
     return i - keys.begin();
 }

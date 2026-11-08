@@ -29,14 +29,18 @@ bool ServiceRequestHandler::handleRequest(QVariantMap message, ISocket *socket)
 {
     QString command         = message["command"].toString();
     if(!command.startsWith("call"))
+    {
         return false;
+    }
 
     //     |
     // call:<service>/<callName>
 
     QStringList tokens = command.split(":");
     if(tokens.count() < 2)
+    {
         return false;
+    }
 
     command = tokens.at(0);
     QString selector = tokens.at(1);
@@ -45,7 +49,7 @@ bool ServiceRequestHandler::handleRequest(QVariantMap message, ISocket *socket)
     QString serviceName;
     serviceName = selectorTokens.first();
     QString call;
-    call = selector.right(selector.count() - serviceName.count() -1);
+    call = selector.right(selector.size() - serviceName.size() -1);
 
     QString token           = message["token"].toString();
     QVariantMap payload     = message["payload"].toMap();

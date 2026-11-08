@@ -11,6 +11,7 @@
 #include <QVariant>
 #include <QFile>
 #include <QReadWriteLock>
+#include <functional>
 
 #include "../ResourceManager/IResource.h"
 #include "../../Authentication/User.h"
@@ -48,6 +49,24 @@ protected:
 
 public:
     ~ListResource() override;
+
+    /*!
+        Sets a property filter function. When set, the ListAccessProxy will use it
+        to control per-property read/write access. When not set (default), all
+        properties are accessible without overhead.
+    */
+    void setPropertyFilter(PropertyFilterFn filter);
+
+    /*!
+        Returns true if a property filter is active. Used by ListAccessProxy
+        to take fast paths when no filter is configured.
+    */
+    bool hasPropertyFilter() const;
+
+    /*!
+        Returns the property filter function (may be empty).
+    */
+    const PropertyFilterFn& propertyFilter() const;
 
     /*!
         \fn qint64 ListResource::lastAccess() const override
@@ -206,6 +225,7 @@ private:
     bool                    _allowUserAccess = true;
     qint64                  _lastAccess;
     IListResourceStorage*   _listStorage;
+    PropertyFilterFn        _propertyFilter;
 
 protected:
     mutable QReadWriteLock  _mutex;

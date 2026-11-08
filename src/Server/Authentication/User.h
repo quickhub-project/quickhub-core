@@ -33,7 +33,7 @@ public:
     void setUserName(const QString &getUserName) ;
     QSet<QString> getSteadyTokens() const override;
 
-    bool checkPassword(QString password) override;
+    CheckPasswortResult checkPassword(QString password) override;
     void setUserData(const QVariantMap &userData);
     bool setEMail(const QString &getEMail) override;
     bool isAuthorizedTo(QString permission) override;

@@ -6,11 +6,12 @@
 
 #include "UserListWrapper.h"
 #include <QDebug>
+#include <algorithm>
 
 
 UserListWrapper::UserListWrapper(QObject *parent) : IList(parent)
 {
-    connect(&_mapper, SIGNAL(mapped(QString)), this, SLOT(dataChanged(QString)));
+    connect(&_mapper, SIGNAL(mappedString(QString)), this, SLOT(dataChanged(QString)));
     connect(DefaultAuthenticator::instance(), SIGNAL(userAdded(userPtr)),      this, SLOT(userAdded(userPtr)));
     connect(DefaultAuthenticator::instance(), SIGNAL(userDeleted(userPtr)),    this, SLOT(userDeleted(userPtr)));
     auto tmpUsers = DefaultAuthenticator::instance()->getUsers();
@@ -70,7 +71,7 @@ int UserListWrapper::getIndex(QString uuid) const
         return -1;
 
     QList<QString> keys = _userVariants.keys();
-    auto i = qBinaryFind(keys.begin(), keys.end(), uuid);
+    auto i = std::lower_bound(keys.begin(), keys.end(), uuid);
     return i - keys.begin();
 }
 

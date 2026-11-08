@@ -30,13 +30,17 @@ public:
     virtual QVariantMap getAllProperties() const;
     virtual QVariant    getMetadata() const;
 
-private:
-    void load();
-    bool save();
-    QFile       _file;
-    QString     _qualifiedResourceName;
+
+protected:
     QVariantMap _propertyData;
     QVariant    _metadata;
+    void load();
+    bool save();
+
+private:
+    QFile       _file;
+    QString     _qualifiedResourceName;
+
 };
 
 #endif // OBJECTRESOURCEFILESYSTEMSTORAGE_H

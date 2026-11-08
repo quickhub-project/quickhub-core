@@ -23,7 +23,7 @@ public:
 
 private:
     resourcePtr createResource(QString token, QString descriptor, QObject *parent) override;
-    IImageResourceStorageFactory* _alternativeStorageFactory;
+    IImageResourceStorageFactory* _alternativeStorageFactory = nullptr;
 };
 
 #endif // IMAGERESOURCEFACTORY_H

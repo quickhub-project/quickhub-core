@@ -23,7 +23,7 @@ QString DeviceService::getServiceName() const
 QStringList DeviceService::getServiceCalls() const
 {
     QStringList calls;
-    calls << "hookWithShortID" << "unhookWithShortID" << "checkForUpdates" << "startUpdate";
+    calls << "hookWithShortID" << "unhookWithShortID" << "checkForUpdates" << "startUpdate" << "getDeviceTypeWithShortID" << "getDeviceTypeWithID";
     return calls;
 }
 
@@ -53,21 +53,43 @@ bool DeviceService::call(QString call, QString token, QString cbID, QVariant arg
 QVariantMap DeviceService::syncCalls(QString call, QString token, QVariant argument)
 {
     QVariantMap argMap = argument.toMap();
+    QVariantMap invalidArgs;
+    invalidArgs["errorstring"] = "Invalid arguments";
+    invalidArgs["errorcode"] = Err::INVALID_DATA;
+
     QVariantMap answer;
+
 
     if(call == "hookWithShortID")
     {
         QString shortID = argMap["shortID"].toString();
         QString mapping = argMap["mapping"].toString();
         bool force = argMap["force"].toBool();
+        QString expectedType = argMap.value("expectedType").toString();
 
         if(mapping.isEmpty() || shortID.isEmpty())
         {
-            answer["errorstring"] = "Invalid arguments";
-            answer["errorcode"] = Err::INVALID_DATA;
+            return invalidArgs;
+        }
+
+        iDevicePtr device;
+        QString uuid = DeviceManager::instance()->getUuidForShortId(shortID);
+        if(!uuid.isEmpty())
+        {
+            device =  DeviceManager::instance()->getDeviceByUuid(uuid);
+        }
+
+        if(device.isNull())
+        {
+            answer["errorcode"] = NOT_FOUND;
             return answer;
         }
 
+        if(!expectedType.isEmpty() && device->type() != expectedType)
+        {
+            answer["errorcode"] = WRONG_TYPE;
+            return answer;
+        }
 
         answer["errorcode"] = DeviceManager::instance()->setDeviceMappingByShortId(token, mapping, shortID, force);
         return answer;
@@ -79,9 +101,7 @@ QVariantMap DeviceService::syncCalls(QString call, QString token, QVariant argum
 
         if(shortID.isEmpty())
         {
-            answer["errorstring"] = "Invalid arguments";
-            answer["errorcode"] = Err::INVALID_DATA;
-            return answer;
+            return invalidArgs;
         }
 
         QString uuid = DeviceManager::instance()->getUuidForShortId(shortID);
@@ -98,9 +118,7 @@ QVariantMap DeviceService::syncCalls(QString call, QString token, QVariant argum
 
         if(mapping.isEmpty())
         {
-            answer["errorstring"] = "Invalid arguments";
-            answer["errorcode"] = Err::INVALID_DATA;
-            return answer;
+            return invalidArgs;
         }
 
         answer["errorcode"] = DeviceManager::instance()->setDeviceMapping(token, mapping, "", true);
@@ -113,16 +131,50 @@ QVariantMap DeviceService::syncCalls(QString call, QString token, QVariant argum
         QString mapping = argMap["mapping"].toString();
         QString uuid = argMap["uuid"].toString();
 
-        if(mapping.isEmpty())
+        if(mapping.isEmpty() )
         {
-            answer["errorstring"] = "Invalid arguments";
-            answer["errorcode"] = Err::INVALID_DATA;
-            return answer;
+            return invalidArgs;
         }
 
         answer["errorcode"] = DeviceManager::instance()->prepareDeviceMapping(token, mapping, uuid);
         return answer;
     }
 
-    return QVariantMap();
+
+    if(call == "getDeviceTypeWithShortID"){
+        QString shortID = argMap["shortID"].toString();
+        QString uuid = DeviceManager::instance()->getUuidForShortId(shortID);
+        if(uuid.isEmpty())
+        {
+            return invalidArgs;
+        }
+        auto device =  DeviceManager::instance()->getDeviceByUuid(uuid);
+
+        if(device.isNull())
+        {
+            answer["errorcode"] = NOT_FOUND;
+            return answer;
+        }
+
+        answer["deviceType"] = device->type();
+        answer["errorcode"] = Err::NO_ERROR;
+        return answer;
+    }
+
+    if(call == "getDeviceTypeWithID"){
+        QString uuid = argMap["uuid"].toString();
+        auto device =  DeviceManager::instance()->getDeviceByUuid(uuid);
+
+        if(device.isNull())
+        {
+            answer["errorcode"] = NOT_FOUND;
+            return answer;
+        }
+
+        answer["deviceType"] = device->type();
+        answer["errorcode"] = Err::NO_ERROR;
+        return answer;
+    }
+
+    return  {};
 }

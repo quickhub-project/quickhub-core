@@ -29,7 +29,7 @@ void DeviceQmlAdapter::call(QString function, QVariant parameters)
 
 QQmlListProperty<QObject> DeviceQmlAdapter::children()
 {
-    return QQmlListProperty<QObject>(this, _children);
+    return QQmlListProperty<QObject>(this, &_children);
 }
 
 bool DeviceQmlAdapter::registerDevice(QString deviceMapping)

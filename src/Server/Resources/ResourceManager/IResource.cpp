@@ -6,12 +6,21 @@
 
 
 #include "IResource.h"
-#include <QJsonDocument>
 
-#include <QDebug>
-#include <QDir>
 #include <QCoreApplication>
+#include <QDir>
+#include <QJsonDocument>
+#include <QLoggingCategory>
 
+// ----------------------------------------------------------------------------
+// Logging
+// ----------------------------------------------------------------------------
+
+Q_LOGGING_CATEGORY(lcResource, "quickhub.resource")
+
+// ----------------------------------------------------------------------------
+// Lifecycle
+// ----------------------------------------------------------------------------
 
 IResource::IResource(QString path, QObject *parent) : QObject(parent),
     _file(path),
@@ -45,7 +54,7 @@ void IResource::save()
     }
     else
     {
-        qDebug()<<"Warning: Could not open file -"<<_file.errorString();
+        qCWarning(lcResource) << "Could not open file for saving:" << _file.fileName() << "-" << _file.errorString();
     }
 }
 
@@ -64,7 +73,7 @@ QVariantMap IResource::load()
     }
     else
     {
-        qDebug()<<"Warning: Could not open File:  "<<_resourcePath<<" - "<<_file.errorString();
+        qCWarning(lcResource) << "Could not open file for loading:" << _resourcePath << "-" << _file.errorString();
         return QVariantMap();
     }
 }
